@@ -729,9 +729,18 @@ local function teleportToGift()
                 -- Notify that the player was teleported
                 library:SendNotification("Teleported to: " .. name, 5, Color3.new(0, 255, 0)) -- Green for success
                 giftFound = true
+
+                -- Wait for a moment (if necessary) before moving the player back 1 stud
+                wait(0.5)
+
+                -- Move the player 1 stud backwards (adjusting the CFrame)
+                local backPosition = player.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, -1)
+                player.Character.HumanoidRootPart.CFrame = backPosition
+
                 -- Simulate the jump (apply force to the Humanoid)
                 local humanoid = player.Character:WaitForChild("Humanoid")
                 wait(0.5) -- Wait for the jump to be initiated (adjust as necessary)
+
                 -- Teleport the player back to their initial position
                 player.Character.HumanoidRootPart.CFrame = initialPosition
                 -- Notify that the player is back at their original location
@@ -749,6 +758,7 @@ end
 
 -- Call the function to teleport to the first gift found
 teleportToGift()
+
 
         wait(1)
     end
@@ -1512,29 +1522,36 @@ _G.ForcefieldWeapon = true
 
 function ForcefieldWeapon()
     while _G.ForcefieldWeapon == true do
-        local player = game:GetService("Players").LocalPlayer
-local character = workspace.Characters.Survivors:FindFirstChild(player.Name)
+        -- Get the local player
+local player = game.Players.LocalPlayer
 
-if player:FindFirstChild("Tools") then
-    for _, tool in pairs(player.Tools:GetChildren()) do
-        -- Ensure the item is a tool
-        if tool:IsA("Tool") then
-            for _, part in pairs(tool:GetDescendants()) do
-                if part:IsA("BasePart") then
-                    -- Create a new Part with the ForceField material
-                    local forceFieldPart = Instance.new("Part")
-                    forceFieldPart.Size = part.Size
-                    forceFieldPart.CFrame = part.CFrame
-                    forceFieldPart.Anchored = true
-                    forceFieldPart.CanCollide = false
-                    forceFieldPart.Transparency = 0.5  -- Semi-transparent for the force field effect
-                    forceFieldPart.Material = Enum.Material.ForceField  -- Set the material to ForceField
-                    forceFieldPart.BrickColor = BrickColor.new("Bright red")  -- Red color
-                    forceFieldPart.Parent = part  -- Parent it to the original part
+-- Check if player exists
+if player then
+    -- Get the survivor character (assuming it's under workspace.Characters.Survivors)
+    local survivorCharacter = workspace.Characters.Survivors:FindFirstChild(player.Name)
+
+    -- Check if the character exists in Survivors
+    if survivorCharacter then
+        -- Loop through all tools in the survivor's character
+        for _, tool in ipairs(survivorCharacter:GetChildren()) do
+            if tool:IsA("Tool") then
+                -- Loop through all parts in the tool and change their material and color
+                for _, part in ipairs(tool:GetChildren()) do
+                    if part:IsA("BasePart") then
+                        -- Change the material to ForceField
+                        part.Material = Enum.Material.ForceField
+                        
+                        -- Change the color to red
+                        part.Color = Color3.fromRGB(255, 0, 0)  -- RGB for red
+                    end
                 end
             end
         end
+    else
+        warn("Character not found in Survivors.")
     end
+else
+    warn("LocalPlayer not found.")
 end
 
         
@@ -1545,7 +1562,7 @@ end
 
 
 sections.Section1:AddToggle({
-    text = "Make your weapon forcefield",
+    text = "ForceField weapon",
     flag = "Toggle_1",
     callback = function(v)
         _G.ForcefieldWeapon  = v
@@ -1555,91 +1572,83 @@ sections.Section1:AddToggle({
 
 
 
-_G.HighlightAll = true
-
-function highlight()
-    while _G.HighlightAll == true do
-        local player = game.Players.LocalPlayer
-        local highlightService = game:GetService("Highlight")
-        
-        -- Function to apply highlight to a character model
-        local function highlightCharacter(character)
-            -- Check if the character is not the local player's character
-            if character and character.Parent and character.Parent == workspace and character:FindFirstChild("Humanoid") and character.Parent.Name ~= player.Name then
-                -- Create a highlight instance
-                local highlight = Instance.new("Highlight")
-                highlight.Parent = character
-                
-                -- Apply color based on the character's folder (Survivors or Zombies)
-                if workspace.Characters.Survivors:FindFirstChild(character.Name) then
-                    highlight.FillColor = Color3.fromRGB(0, 0, 255)  -- Blue for Survivors
-                    highlight.OutlineColor = Color3.fromRGB(0, 0, 0)  -- Dark Blue outline for Survivors
-                elseif workspace.Characters.Zombies:FindFirstChild(character.Name) then
-                    highlight.FillColor = Color3.fromRGB(255, 0, 0)  -- Red for Zombies
-                    highlight.OutlineColor = Color3.fromRGB(0, 0, 0)  -- Dark Red outline for Zombies
-                end
-                
-                highlight.FillTransparency = 0.5 -- Transparency level
-                highlight.OutlineTransparency = 0.3 -- Outline transparency
-            end
-        end
-        
-        -- Function to remove highlight from a character model
-        local function removeHighlight(character)
-            if character and character:FindFirstChild("Highlight") then
-                character.Highlight:Destroy()
-            end
-        end
-        
-        -- Loop through Survivors and Zombies and apply highlight
-        local function highlightAllCharacters()
-            for _, survivor in pairs(workspace.Characters.Survivors:GetChildren()) do
-                highlightCharacter(survivor)
-            end
-        
-            for _, zombie in pairs(workspace.Characters.Zombies:GetChildren()) do
-                highlightCharacter(zombie)
-            end
-        end
-        
-        -- Run the function to highlight all characters on script start
-        highlightAllCharacters()
-        
-        -- Optional: Re-highlight when new characters spawn
-        workspace.Characters.Survivors.ChildAdded:Connect(highlightCharacter)
-        workspace.Characters.Zombies.ChildAdded:Connect(highlightCharacter)
-        
-        -- Optional: Remove highlight when characters are removed
-        workspace.Characters.Survivors.ChildRemoved:Connect(removeHighlight)
-        workspace.Characters.Zombies.ChildRemoved:Connect(removeHighlight)
-        
-    wait(0.5)
-    
 
 
-end
-
-
-end
-
-
-_G.HighlightAll = true
-
-function HighlightAll()
-    while _G.HighlightAll == true do
-        highlight()
-        wait(0.5)
-    end
-end
 
 
 
 sections.Section1:AddToggle({
-    text = "Highlight",
+    text = "Esp",
     flag = "Toggle_1",
     callback = function(v)
-        _G.HighlightAll  = v
-        HighlightAll()
+        --[[
+	WARNING: Heads up! This script has not been verified by ScriptBlox. Use at your own risk!
+]]
+local ESP = loadstring(game:HttpGet("https://raw.githubusercontent.com/pAdsasd3q2/Da98123412dsxf/refs/heads/main/Esp"))();
+
+--// Master switch
+ESP.Enabled = v;
+
+--// Enable boxes
+ESP.ShowBox = true;
+
+--// Set the box type to corner
+ESP.BoxType = "Corner Box Esp";
+
+--// Enable names
+ESP.ShowName = true;
+
+--// Enable Healhbar
+ESP.ShowHealth = true;
+
+--// Enable tracers
+ESP.ShowTracer = false;
+
+--// Enable Distance
+ESP.ShowDistance = true;
+
+ESP.Teamcheck = true;
+
+
+
+
+--[[
+    Enable skeletons: (currently broken)
+    ESP.ShowSkeletons = true;
+]]
+
+
+
+--[[
+    These are all the settings
+    local ESP_SETTINGS = {
+        BoxOutlineColor = Color3.new(0, 0, 0),
+        BoxColor = Color3.new(1, 1, 1),
+        NameColor = Color3.new(1, 1, 1),
+        HealthOutlineColor = Color3.new(0, 0, 0),
+        HealthHighColor = Color3.new(0, 1, 0),
+        HealthLowColor = Color3.new(1, 0, 0),
+        CharSize = Vector2.new(4, 6),
+        Teamcheck = false,
+        WallCheck = false,
+        Enabled = false,
+        ShowBox = false,
+        BoxType = "2D",
+        ShowName = false,
+        ShowHealth = false,
+        ShowDistance = false,
+        ShowSkeletons = false,
+        ShowTracer = false,
+        TracerColor = Color3.new(1, 1, 1), 
+        TracerThickness = 2,
+        SkeletonsColor = Color3.new(1, 1, 1),
+        TracerPosition = "Bottom",
+    }
+    ermm yep thats about it
+]]
+
+
+
     end
 })
 
