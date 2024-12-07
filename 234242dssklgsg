@@ -456,11 +456,11 @@ function TicketFarm()
             end
         end
         
-        -- If no "Ticket" part was found or all parts have been skipped, teleport to a fallback position
+        -- If no "Ticket" part was found or all parts have been skipped, teleport to (0, 1000, 0)
         if not ticketPart then
-            print("No available ticket parts to teleport to, skipping iteration.")
-            wait(0.1)
-            continue -- Skip this iteration
+            print("No available ticket parts to teleport to, teleporting to (0, 1000, 0).")
+            ticketPart = Instance.new("Part") -- Create a dummy part to represent (0, 1000, 0)
+            ticketPart.Position = Vector3.new(0, 1000, 0)
         end
         
         -- Teleport the character to the next "Ticket" part using Lerp
@@ -473,7 +473,7 @@ function TicketFarm()
                 -- Set the Lerp parameters
                 local startPosition = humanoidRootPart.Position
                 local steps = 5 -- Number of interpolation steps (for smoother movement)
-                local duration = 0.18 -- Total time to complete the teleport (in seconds)
+                local duration = 0.15 -- Total time to complete the teleport (in seconds)
                 local stepDuration = duration / steps -- Time per step
 
                 -- Add a BodyVelocity to set velocity to 0
@@ -528,6 +528,7 @@ sections.Section2:AddToggle({
         end
     end
 })
+
 
 
 
@@ -1475,71 +1476,40 @@ sections.Section1:AddSeparator({
     text = "Visuals"
 })
 
-function FovChanger()
-    local player = game:GetService("Players").LocalPlayer
-local camera = game:GetService("Workspace").CurrentCamera
-
--- Set FOV when player respawns
-player.CharacterAdded:Connect(function(character)
-    -- Wait until the camera is ready
-    local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
-    -- Set the desired FOV
-    camera.FieldOfView = 120
-end)
-    wait(0.00000001)
-    local player = game:GetService("Players").LocalPlayer
-local camera = game:GetService("Workspace").CurrentCamera
-
--- Desired FOV value
-local targetFOV = 120
-
--- Continuously set the FOV every frame using RenderStepped
-game:GetService("RunService").RenderStepped:Connect(function()
-    camera.FieldOfView = targetFOV
-end)
-wait(0.5)
-end 
 
 
 
-
-sections.Section1:AddSlider({
-	text = "Fov", 
-	flag = '', 
-	suffix = "", 
-	value = 0.000,
-	min = 70, 
-	max = 120,
-	increment = 0.001,
-	tooltip = "Change your fov",
-	risky = false,
-	callback = function(v) 
-
-        function FovChanger()
-            local player = game:GetService("Players").LocalPlayer
+-- Add the toggle for changing FOV
+sections.Section1:AddToggle({
+    text = "Fov changer",  -- Toggle name
+    flag = "Toggle_1",  -- Flag for state tracking
+    callback = function(v)
+        local player = game:GetService("Players").LocalPlayer
         local camera = game:GetService("Workspace").CurrentCamera
         
-        -- Set FOV when player respawns
+        -- When the toggle is turned on
+        if v then
+            -- Set the desired FOV to 120
+            camera.FieldOfView = 120
+        else
+            -- When the toggle is turned off, set FOV to 70
+            camera.FieldOfView = 90
+        end
+
+        -- Optional: If you want to ensure FOV is applied on respawn
         player.CharacterAdded:Connect(function(character)
-            -- Wait until the camera is ready
-            local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
-            -- Set the desired FOV
-            camera.FieldOfView = v
+            -- Set the FOV when the character respawns
+            if v then
+                camera.FieldOfView = 120
+            else
+                camera.FieldOfView = 90
+            end
         end)
-            local player = game:GetService("Players").LocalPlayer
-        local camera = game:GetService("Workspace").CurrentCamera
-        
-        -- Desired FOV value
-        local targetFOV = v
-        
-        -- Continuously set the FOV every frame using RenderStepped
-        game:GetService("RunService").RenderStepped:Connect(function()
-            camera.FieldOfView = targetFOV
-        end)
-		
-	end
-end
+    end
 })
+
+
+
 
 
 
