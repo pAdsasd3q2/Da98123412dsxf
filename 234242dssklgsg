@@ -1716,14 +1716,14 @@ sections.Section2:AddToggle({
 
 
 
-library:SendNotification("Sync.wtf Succesfully Loaded!", 5, Color3.new(255, 0, 0))
+library:SendNotification("Sync.wtf Succesfully Loaded!", 5, Color3.new(0, 255, 0))
 wait(0.5)
 
 
 
-library:SendNotification("Update logs: Added Auto Complete KingStreet", 5, Color3.new(255, 0, 0))
+library:SendNotification("Update logs: Added Auto Complete KingStreet", 5, Color3.new(0, 0, 255))
 
-library:SendNotification("Update logs: Fixed and improved alot of features", 5, Color3.new(255, 0, 0))
+library:SendNotification("Update logs: Fixed and improved alot of features", 5, Color3.new(0, 0, 255))
 
 
 
