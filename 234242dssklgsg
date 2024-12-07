@@ -1542,98 +1542,60 @@ _G.HighlightAll = true
 
 function highlight()
     while _G.HighlightAll == true do
-    local FillColor = Color3.fromRGB(255, 0, 0)  -- Default color for Zombies and NPCs
-    local DepthMode = "AlwaysOnTop"
-    local FillTransparency = 0.5
-    local OutlineColor = Color3.fromRGB(0, 0, 0)
-    local OutlineTransparency = 0
-    
-    local SurvivorFillColor = Color3.fromRGB(0, 0, 255)  -- New color for Survivors (green)
-    
-    local CoreGui = game:FindService("CoreGui")
-    local Players = game:FindService("Players")
-    local lp = Players.LocalPlayer
-    local connections = {}
-    
-    local Storage = Instance.new("Folder")
-    Storage.Parent = CoreGui
-    Storage.Name = "Highlight_Storage"
-    
-    -- Function to check if a model belongs to the local player (only client-side)
-    local function IsLocalPlayer(model)
-        if game:GetService("RunService"):IsClient() then
-            return model:IsDescendantOf(lp.Character)
-        end
-        return false
-    end
-    
-    -- Function to highlight any given model with a specified color
-    local function HighlightModel(model, fillColor)
-        -- Skip highlighting if the model is the local player
-        if IsLocalPlayer(model) then return end
-    
-        local Highlight = Instance.new("Highlight")
-        Highlight.Name = model.Name
-        Highlight.FillColor = fillColor or FillColor  -- Use the color passed in, or default to the FillColor
-        Highlight.DepthMode = DepthMode
-        Highlight.FillTransparency = FillTransparency
-        Highlight.OutlineColor = OutlineColor
-        Highlight.OutlineTransparency = OutlineTransparency
-        Highlight.Parent = Storage
-    
-        Highlight.Adornee = model
-    end
-    
-    -- Function to apply highlight to models in a given folder
-    local function HighlightCharactersInFolder(folder, fillColor)
-        for _, model in pairs(folder:GetChildren()) do
-            if model:IsA("Model") then
-                HighlightModel(model, fillColor)
+        local player = game.Players.LocalPlayer
+        local highlightService = game:GetService("Highlight")
+        
+        -- Function to apply highlight to a character model
+        local function highlightCharacter(character)
+            -- Check if the character is not the local player's character
+            if character and character.Parent and character.Parent == workspace and character:FindFirstChild("Humanoid") and character.Parent.Name ~= player.Name then
+                -- Create a highlight instance
+                local highlight = Instance.new("Highlight")
+                highlight.Parent = character
+                
+                -- Apply color based on the character's folder (Survivors or Zombies)
+                if workspace.Characters.Survivors:FindFirstChild(character.Name) then
+                    highlight.FillColor = Color3.fromRGB(0, 0, 255)  -- Blue for Survivors
+                    highlight.OutlineColor = Color3.fromRGB(0, 0, 0)  -- Dark Blue outline for Survivors
+                elseif workspace.Characters.Zombies:FindFirstChild(character.Name) then
+                    highlight.FillColor = Color3.fromRGB(255, 0, 0)  -- Red for Zombies
+                    highlight.OutlineColor = Color3.fromRGB(0, 0, 0)  -- Dark Red outline for Zombies
+                end
+                
+                highlight.FillTransparency = 0.5 -- Transparency level
+                highlight.OutlineTransparency = 0.3 -- Outline transparency
             end
         end
-    end
-    
-    -- Set up highlighting when characters are added to any folder
-    local function OnCharacterAdded(model, fillColor)
-        if model:IsA("Model") then
-            HighlightModel(model, fillColor)
+        
+        -- Function to remove highlight from a character model
+        local function removeHighlight(character)
+            if character and character:FindFirstChild("Highlight") then
+                character.Highlight:Destroy()
+            end
         end
-    end
-    
-    -- Highlight models in specified folders
-    HighlightCharactersInFolder(workspace.Characters.Survivors, SurvivorFillColor)  -- Apply different color to Survivors
-    HighlightCharactersInFolder(workspace.Characters.Zombies, FillColor)  -- Default color for Zombies
-    HighlightCharactersInFolder(workspace.Characters.NPC, FillColor)  -- Default color for NPCs
-    HighlightCharactersInFolder(workspace.NoRay, FillColor)  -- Highlight models in NoRay folder
-    
-    -- Connect to the folders to apply highlights when new models are added
-    workspace.Characters.Survivors.ChildAdded:Connect(function(model)
-        OnCharacterAdded(model, SurvivorFillColor)  -- Apply Survivor color
-    end)
-    
-    workspace.Characters.Zombies.ChildAdded:Connect(function(model)
-        OnCharacterAdded(model, FillColor)  -- Default color for Zombies
-    end)
-    
-    workspace.Characters.NPC.ChildAdded:Connect(function(model)
-        OnCharacterAdded(model, FillColor)  -- Default color for NPCs
-    end)
-    
-    workspace.NoRay.ChildAdded:Connect(function(model)
-        OnCharacterAdded(model, FillColor)  -- Default color for NoRay folder
-    end)
-    
-    -- Handle removal of models and clean up highlights
-    local function OnCharacterRemoved(model)
-        if Storage:FindFirstChild(model.Name) then
-            Storage[model.Name]:Destroy()
+        
+        -- Loop through Survivors and Zombies and apply highlight
+        local function highlightAllCharacters()
+            for _, survivor in pairs(workspace.Characters.Survivors:GetChildren()) do
+                highlightCharacter(survivor)
+            end
+        
+            for _, zombie in pairs(workspace.Characters.Zombies:GetChildren()) do
+                highlightCharacter(zombie)
+            end
         end
-    end
-    
-    workspace.Characters.Survivors.ChildRemoved:Connect(OnCharacterRemoved)
-    workspace.Characters.Zombies.ChildRemoved:Connect(OnCharacterRemoved)
-    workspace.Characters.NPC.ChildRemoved:Connect(OnCharacterRemoved)
-    workspace.NoRay.ChildRemoved:Connect(OnCharacterRemoved)
+        
+        -- Run the function to highlight all characters on script start
+        highlightAllCharacters()
+        
+        -- Optional: Re-highlight when new characters spawn
+        workspace.Characters.Survivors.ChildAdded:Connect(highlightCharacter)
+        workspace.Characters.Zombies.ChildAdded:Connect(highlightCharacter)
+        
+        -- Optional: Remove highlight when characters are removed
+        workspace.Characters.Survivors.ChildRemoved:Connect(removeHighlight)
+        workspace.Characters.Zombies.ChildRemoved:Connect(removeHighlight)
+        
     wait(0.5)
     
 
@@ -1734,13 +1696,13 @@ sections.Section2:AddToggle({
 
 
 
-
+library:SendNotification("Updated logs: Added Auto Complete KingStreet", 5, Color3.new(255, 0, 0))
 
 
 library:SendNotification("Sync.wtf Succesfully Loaded!", 5, Color3.new(255, 0, 0))
 
 
 
-library:SendNotification("Updated: Added Auto Complete KingStreet", 5, Color3.new(255, 0, 0))
+
 
 --Window:SetOpen(true) -- Either Close Or Open Window
