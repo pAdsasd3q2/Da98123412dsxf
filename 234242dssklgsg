@@ -1518,13 +1518,13 @@ _G.ForcefieldWeapon = true
 
 function ForcefieldWeapon()
     while _G.ForcefieldWeapon == true do
-        -- Get the local player
-local player = game.Players.LocalPlayer
+-- Get the local player using GetService
+local player = game:GetService("Players").LocalPlayer
 
 -- Check if player exists
 if player then
     -- Get the survivor character (assuming it's under workspace.Characters.Survivors)
-    local survivorCharacter = workspace.Characters.Survivors:FindFirstChild(player.Name)
+    local survivorCharacter = game:GetService("Workspace").Characters.Survivors:FindFirstChild(player.Name)
 
     -- Check if the character exists in Survivors
     if survivorCharacter then
@@ -1551,7 +1551,7 @@ else
 end
 
         
-        wait(0.1)
+        wait(0.25)
     end
 end
 
@@ -1595,7 +1595,7 @@ ESP.BoxType = "Corner Box Esp";
 ESP.ShowName = true;
 
 --// Enable Healhbar
-ESP.ShowHealth = true;
+ESP.ShowHealth = false;
 
 --// Enable tracers
 ESP.ShowTracer = false;
