@@ -1503,26 +1503,43 @@ end
 
 
 
-_G.Fov = true
+sections.Section1:AddSlider({
+	text = "Fov", 
+	flag = '', 
+	suffix = "", 
+	value = 0.000,
+	min = 70, 
+	max = 120,
+	increment = 0.001,
+	tooltip = "Change your fov",
+	risky = false,
+	callback = function(v) 
 
-function Fov()
-    while _G.Fov == true do
-        FovChanger()
-        wait(0.00000001)
-    end
+        function FovChanger()
+            local player = game:GetService("Players").LocalPlayer
+        local camera = game:GetService("Workspace").CurrentCamera
+        
+        -- Set FOV when player respawns
+        player.CharacterAdded:Connect(function(character)
+            -- Wait until the camera is ready
+            local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+            -- Set the desired FOV
+            camera.FieldOfView = v
+        end)
+            local player = game:GetService("Players").LocalPlayer
+        local camera = game:GetService("Workspace").CurrentCamera
+        
+        -- Desired FOV value
+        local targetFOV = v
+        
+        -- Continuously set the FOV every frame using RenderStepped
+        game:GetService("RunService").RenderStepped:Connect(function()
+            camera.FieldOfView = targetFOV
+        end)
+		
+	end
 end
-
-
-
-sections.Section1:AddToggle({
-    text = "Fov (Survivor)",
-    flag = "Toggle_1",
-    callback = function(v)
-        _G.Fov  = v
-        Fov()
-    end
 })
-
 
 
 
