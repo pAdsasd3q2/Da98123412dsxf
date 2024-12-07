@@ -401,7 +401,7 @@ else
     warn("No wheel part found in NoRay workspace.")
 end
 
-        wait(1)
+        wait(0.5)
     end
 end
 
@@ -984,7 +984,7 @@ function TpZombies()
                     local humanoidRootPart = randomZombie:FindFirstChild("HumanoidRootPart")
                     if humanoidRootPart then
                         -- Get the position of the HumanoidRootPart and add a Y offset of 15 studs
-                        local targetPosition = humanoidRootPart.Position + Vector3.new(0, 13.5, 0)
+                        local targetPosition = humanoidRootPart.Position + Vector3.new(0, 0, -15)
 
                         -- Teleport the player to the new position
                         playerCharacter:SetPrimaryPartCFrame(CFrame.new(targetPosition))
