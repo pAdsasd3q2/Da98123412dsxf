@@ -13,7 +13,7 @@ local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/Yield
 library:init() -- Initalizes Library Do Not Delete This
 
 local Window = library.NewWindow({
-	title = "r2d shit",
+	title = "Ready 2 die 0.0.4c",
 	size = UDim2.new(0, 525, 0, 650)
 })
 
@@ -425,97 +425,120 @@ sections.Section1:AddToggle({
 
 _G.TicketFarm = true
 
+function enableNoclip(character)
+    for _, part in pairs(character:GetDescendants()) do
+        if part:IsA("BasePart") then
+            part.CanCollide = false
+        end
+    end
+end
+
+function disableNoclip(character)
+    for _, part in pairs(character:GetDescendants()) do
+        if part:IsA("BasePart") then
+            part.CanCollide = true
+        end
+    end
+end
+
 function TicketFarm()
-    local lastTicket = nil -- Store the last ticket part
-    local repeatCount = 0 -- Count consecutive visits to the same part
+    -- Get references to Workspace folders
+    local workspace = game:GetService("Workspace")
+    local charactersFolder = workspace:WaitForChild("Characters")
+    local survivorsFolder = charactersFolder:WaitForChild("Survivors")
+    local zombiesFolder = charactersFolder:WaitForChild("Zombies")
+
+    -- Locate the player's character
+    local localPlayerName = game:GetService("Players").LocalPlayer.Name
+    local characterInSurvivors = survivorsFolder:FindFirstChild(localPlayerName)
+
+    -- Wait until the player is in Survivors
+    while not characterInSurvivors do
+        print("Player not in survivors")
+        characterInSurvivors = survivorsFolder:FindFirstChild(localPlayerName)
+        wait(1)
+    end
+
+    -- Get the initial ticket count
+    local initialTickets = game:GetService("Players").LocalPlayer.SETTINGS.Tickets.Value
+    local previousTicketCount = initialTickets
 
     while _G.TicketFarm == true do
-        local workspace = game:GetService("Workspace") -- Get the Workspace service
-        local players = game:GetService("Players") -- Get the Players service
+        -- Check if the player's character exists in the Survivors folder
+        if not characterInSurvivors then
+            -- Retry finding the character if it doesn't exist
+            characterInSurvivors = survivorsFolder:FindFirstChild(localPlayerName)
+            wait(0.1)
+            continue
+        end
+
         local noRayFolder = workspace:WaitForChild("NoRay") -- Find the NoRay folder
-        local ticketParts = noRayFolder:GetChildren() -- Get all children in NoRay folder
-        local ticketPart = nil
-        
-        -- Find the next available "Ticket" part
-        for _, part in ipairs(ticketParts) do
-            if part.Name == "Ticket" then
-                -- If a ticket part has already been visited, check if we should skip it
-                if part == lastTicket then
-                    repeatCount += 1
-                    if repeatCount > 5 then
-                        -- Skip this ticket and move to the next one
-                        continue
-                    end
-                else
-                    -- Reset repeat count if we find a new ticket
-                    repeatCount = 0
-                    lastTicket = part
-                    ticketPart = part
-                    break
-                end
-            end
+        local ticketPart = noRayFolder:FindFirstChild("Ticket") -- Try to find the part named "Ticket"
+
+        local targetPosition
+
+        if ticketPart then
+            -- If "Ticket" is found, use its position to teleport
+            targetPosition = ticketPart.Position
+        else
+            -- If "Ticket" is not found, teleport to the sky position (0, 1000, 0)
+            targetPosition = Vector3.new(0, 1000, 0)
         end
-        
-        -- If no "Ticket" part was found or all parts have been skipped, teleport to (0, 1000, 0)
-        if not ticketPart then
-            print("No available ticket parts to teleport to, teleporting to (0, 1000, 0).")
-            ticketPart = Instance.new("Part") -- Create a dummy part to represent (0, 1000, 0)
-            ticketPart.Position = Vector3.new(0, 1000, 0)
-        end
-        
-        -- Teleport the character to the next "Ticket" part using Lerp
-        local targetPosition = ticketPart.Position
-        local character = players.LocalPlayer.Character
-        if character then
-            -- Ensure the character has a HumanoidRootPart
-            local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
-            if humanoidRootPart then
-                -- Set the Lerp parameters
-                local startPosition = humanoidRootPart.Position
-                local steps = 5 -- Number of interpolation steps (for smoother movement)
-                local duration = 0.15 -- Total time to complete the teleport (in seconds)
-                local stepDuration = duration / steps -- Time per step
 
-                -- Add a BodyVelocity to set velocity to 0
-                local bodyVelocity = Instance.new("BodyVelocity")
-                bodyVelocity.Velocity = Vector3.zero
-                bodyVelocity.MaxForce = Vector3.new(100000, 100000, 100000) -- High force to stabilize
-                bodyVelocity.Parent = humanoidRootPart
+        -- Enable noclip for the character
+        enableNoclip(characterInSurvivors)
 
-                -- Disable collision during teleportation
-                humanoidRootPart.CanCollide = false
+        -- Ensure the character has a HumanoidRootPart
+        local humanoidRootPart = characterInSurvivors:FindFirstChild("HumanoidRootPart")
+        if humanoidRootPart then
+            -- Set the Lerp parameters
+            local startPosition = humanoidRootPart.Position
+            local steps = 3 -- Number of interpolation steps
+            local duration = 0.1 -- Total time to complete the teleport (in seconds)
+            local stepDuration = duration / steps -- Time per step
 
-                -- Smooth Lerp movement with wobble
-                for i = 1, steps do
-                    -- Calculate the interpolation progress
-                    local progress = i / steps
-                    
-                    -- Add wobble effect: Random small offset in x, y, z axes
-                    local wobbleOffset = Vector3.new(
-                        math.random(-5, 5) * 0.5,  -- Small random x offset
-                        math.random(-5, 5) * 0.5,  -- Small random y offset
-                        math.random(-5, 5) * 0.5   -- Small random z offset
-                    )
+            -- Add a BodyVelocity to set velocity to 0
+            local bodyVelocity = Instance.new("BodyVelocity")
+            bodyVelocity.Velocity = Vector3.zero
+            bodyVelocity.MaxForce = Vector3.new(100000, 100000, 100000) -- High force to stabilize
+            bodyVelocity.Parent = humanoidRootPart
 
-                    -- Apply wobble and Lerp the movement
-                    local wobblePosition = startPosition:Lerp(targetPosition, progress) + wobbleOffset
+            -- Smooth Lerp movement
+            for i = 1, steps do
+                -- Calculate the interpolation progress
+                local progress = i / steps
+                -- Add wobble effect
+                local wobbleOffset = Vector3.new(
+                    math.random(-5, 5) * 0.1, -- Small random x offset
+                    math.random(-5, 5) * 0.1, -- Small random y offset
+                    math.random(-5, 5) * 0.1  -- Small random z offset
+                )
+                local wobblePosition = targetPosition + wobbleOffset
 
-                    -- Move the HumanoidRootPart incrementally
-                    humanoidRootPart.CFrame = CFrame.new(wobblePosition)
-                    wait(stepDuration) -- Wait for the next step
-                end
-
-                -- Ensure the final position is exactly the target position (with no wobble)
-                humanoidRootPart.CFrame = CFrame.new(targetPosition)
-
-                -- Cleanup: Remove BodyVelocity and re-enable collision
-                bodyVelocity:Destroy()
-                humanoidRootPart.CanCollide = true
+                -- Move the HumanoidRootPart incrementally
+                humanoidRootPart.CFrame = CFrame.new(startPosition:Lerp(wobblePosition, progress))
+                wait(stepDuration) -- Wait for the next step
             end
+
+            -- Ensure the final position is exactly the target position
+            humanoidRootPart.CFrame = CFrame.new(targetPosition)
+
+            -- Cleanup: Remove BodyVelocity
+            bodyVelocity:Destroy()
         end
 
         wait(0.1) -- Add slight delay for smoother wobbling
     end
+
+    -- Re-enable collision for the character after farming stops
+    disableNoclip(characterInSurvivors)
+
+    -- Calculate and show the tickets gained after farming stops
+    local finalTicketCount = game:GetService("Players").LocalPlayer.SETTINGS.Tickets.Value
+    local ticketsGained = finalTicketCount - previousTicketCount
+
+    -- Send notification with the results
+    library:SendNotification("You gained " .. ticketsGained .. " tickets!", 5, Color3.new(0, 255, 0))
 end
 
 sections.Section2:AddToggle({
@@ -528,6 +551,8 @@ sections.Section2:AddToggle({
         end
     end
 })
+
+
 
 
 
@@ -1072,71 +1097,11 @@ sections.Section1:AddToggle({
 
 
 
-_G.SpamClub = true
+_G.BruteKill = true
 
-function SpamClub()
-    while _G.SpamClub == true do
-        local LocalPlayer = game:GetService("Players").LocalPlayer
+function BruteKill()
+    while _G.BruteKill == true do
 
--- Function to wait until the character is loaded
-local function waitForCharacter(player)
-    while not player.Character or not player.Character:FindFirstChild("HumanoidRootPart") do
-        wait(0.1)
-    end
-end
-
--- Wait for the character to be fully loaded
-waitForCharacter(LocalPlayer)
-
--- Save the survivor's original position
-local originalCFrame = LocalPlayer.Character.HumanoidRootPart.CFrame
-
--- Get all survivors in workspace
-local survivors = workspace.Characters:FindFirstChild("Survivors")
-if not survivors then
-print("2222") 
-   return
-end
-
--- Get all characters in the survivors folder
-local survivorList = {}
-for _, survivor in pairs(survivors:GetChildren()) do
-    if survivor:IsA("Model") and survivor:FindFirstChild("Humanoid") then
-        table.insert(survivorList, survivor)
-    end
-end
-
--- If there are no survivors
-if #survivorList == 0 then
-print("22222") 
-   return
-end
-
--- Pick a random survivor
-local randomSurvivor = survivorList[math.random(1, #survivorList)]
-
--- Teleport to the random survivor's position
-if randomSurvivor and randomSurvivor:FindFirstChild("HumanoidRootPart") then
-    LocalPlayer.Character.HumanoidRootPart.CFrame = randomSurvivor.HumanoidRootPart.CFrame
-    
-    -- Send a notification that you've teleported
-print("222222")
-    -- Fire the remote event
-    local ohBoolean1 = true
-    game:GetService("ReplicatedStorage").Events.Zombie.ClawAttacked:FireServer()
-
-    -- Check the health of the survivor
-    local humanoid = randomSurvivor:FindFirstChildOfClass("Humanoid")
-    if humanoid then
-        if humanoid.Health <= 0 then
-            -- If the target's health is 0, notify and stop further actions
-print("222")            return
-        else
-            -- If the survivor is still alive, notify and stop after teleporting once
-            print("22222")
-        end
-    end
-end
 
         wait(0.1)
     end
@@ -1148,8 +1113,8 @@ sections.Section1:AddToggle({
     text = "Kill all (Brute) BROKEN!",
     flag = "Toggle_1",
     callback = function(v)
-        _G.SpamClub  = v
-        SpamClub()
+        _G.BruteKill  = v
+        BruteKill()
     end
 })
 
@@ -1476,35 +1441,35 @@ sections.Section1:AddSeparator({
     text = "Visuals"
 })
 
-
-
+-- Function for changing FOV
+local function FovChanger2()
+    local player = game:GetService("Players").LocalPlayer
+    local camera = game:GetService("Workspace").CurrentCamera
+    
+    -- Loop to constantly change the FOV while toggle is on
+    while _G.FovChanger2 do
+        camera.FieldOfView = 120  -- Set the desired FOV to 120
+        wait(0.1)  -- Wait for 0.5 seconds before updating again
+    end
+end
 
 -- Add the toggle for changing FOV
 sections.Section1:AddToggle({
     text = "Fov changer",  -- Toggle name
     flag = "Toggle_1",  -- Flag for state tracking
     callback = function(v)
-        local player = game:GetService("Players").LocalPlayer
-        local camera = game:GetService("Workspace").CurrentCamera
-        
         -- When the toggle is turned on
         if v then
-            -- Set the desired FOV to 120
-            camera.FieldOfView = 120
-        else
-            -- When the toggle is turned off, set FOV to 70
-            camera.FieldOfView = 90
-        end
+            _G.FovChanger2 = true  -- Enable FOV change loop
+            FovChanger2()  -- Start the function
 
-        -- Optional: If you want to ensure FOV is applied on respawn
-        player.CharacterAdded:Connect(function(character)
-            -- Set the FOV when the character respawns
-            if v then
-                camera.FieldOfView = 120
-            else
-                camera.FieldOfView = 90
-            end
-        end)
+        else
+            -- When the toggle is turned off, set FOV to 90
+            _G.FovChanger2 = false  -- Stop FOV change loop
+            local player = game:GetService("Players").LocalPlayer
+            local camera = game:GetService("Workspace").CurrentCamera
+            camera.FieldOfView = 90  -- Set the FOV to 90
+        end
     end
 })
 
