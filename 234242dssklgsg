@@ -935,72 +935,119 @@ sections.Section2:AddToggle({
 _G.TpZombies = true
 
 function TpZombies()
-    while _G.TpZombies == true do
--- Get a reference to the Zombies folder in the workspace
-local zombiesFolder = game.Workspace.Characters.Zombies
+    -- Disable collisions for all parts in workspace.Map
+    local map = game.Workspace:WaitForChild("Map")
+    for _, part in pairs(map:GetDescendants()) do
+        if part:IsA("BasePart") then
+            part.CanCollide = false
+        end
+    end
 
--- Define a fallback position in the sky
-local skyPosition = Vector3.new(0, 1000, 0)  -- You can adjust the Y value to determine how high in the sky
-
--- Check if the Zombies folder exists and has models in it
-if zombiesFolder and #zombiesFolder:GetChildren() > 0 then
-    -- Get a random model from the Zombies folder
-    local randomZombie = zombiesFolder:GetChildren()[math.random(1, #zombiesFolder:GetChildren())]
-
-    -- Check if the model has a HumanoidRootPart
-    local humanoidRootPart = randomZombie:FindFirstChild("HumanoidRootPart")
-    if humanoidRootPart then
-        -- Get the position of the HumanoidRootPart and add a Y offset of 15 studs
-        local targetPosition = humanoidRootPart.Position + Vector3.new(0, 12.5, 0)
-
-        -- Get the player's character
-        local playerCharacter = game:GetService("Players").LocalPlayer.Character
-
-        -- Check if the player has a HumanoidRootPart and a Humanoid
-        local humanoidRootPartPlayer = playerCharacter:FindFirstChild("HumanoidRootPart")
+    -- Get a reference to the player's character
+    local playerCharacter = game:GetService("Players").LocalPlayer.Character
+    if playerCharacter then
+        local humanoidRootPartPlayer = playerCharacter:WaitForChild("HumanoidRootPart", 10)
         local humanoid = playerCharacter:FindFirstChild("Humanoid")
 
         if humanoidRootPartPlayer and humanoid then
-            -- Temporarily set the velocity of the player's HumanoidRootPart to zero
-            humanoidRootPartPlayer.Velocity = Vector3.new(0, 0, 0)
-
-            -- Teleport the player to the new position
-            playerCharacter:SetPrimaryPartCFrame(CFrame.new(targetPosition))
-        else
-            warn("Player does not have a HumanoidRootPart or Humanoid.")
+            -- Prevent the character from falling by disabling gravity and setting PlatformStand
+            humanoid.PlatformStand = true
+            humanoidRootPartPlayer.Velocity = Vector3.new(0, 0, 0)  -- Stop velocity to prevent falling
         end
-    else
-        warn("Random zombie model does not have a HumanoidRootPart.")
     end
-else
-    warn("No zombies found in the Zombies folder.")
 
-    -- If no zombies are found, teleport the player to the sky
-    local playerCharacter = game:GetService("Players").LocalPlayer.Character
-    local humanoidRootPartPlayer = playerCharacter:FindFirstChild("HumanoidRootPart")
-    if humanoidRootPartPlayer then
-        -- Temporarily set the velocity to 0 to prevent fall damage
-        humanoidRootPartPlayer.Velocity = Vector3.new(0, 0, 0)
-        -- Teleport the player to the sky position
-        playerCharacter:SetPrimaryPartCFrame(CFrame.new(skyPosition))
-    else
-        warn("Player does not have a HumanoidRootPart.")
+    while _G.TpZombies == true do
+        -- Get a reference to the Zombies folder in the workspace
+        local zombiesFolder = game.Workspace.Characters.Zombies
+
+        -- Define a fallback position in the sky
+        local skyPosition = Vector3.new(0, 1000, 0)  -- You can adjust the Y value to determine how high in the sky
+
+        -- Get the player's character
+        local playerCharacter = game:GetService("Players").LocalPlayer.Character
+        if playerCharacter then
+            -- Get the player's HumanoidRootPart and Humanoid
+            local humanoidRootPartPlayer = playerCharacter:WaitForChild("HumanoidRootPart", 10)  -- Waits for up to 10 seconds
+            local humanoid = playerCharacter:FindFirstChild("Humanoid")
+
+            if humanoidRootPartPlayer and humanoid then
+                -- Temporarily set the velocity of the player's HumanoidRootPart to zero to prevent fall damage
+                humanoidRootPartPlayer.Velocity = Vector3.new(0, 0, 0)
+
+                -- Perform teleportation logic here
+                -- Check if the Zombies folder exists and has models in it
+                if zombiesFolder and #zombiesFolder:GetChildren() > 0 then
+                    -- Get a random model from the Zombies folder
+                    local randomZombie = zombiesFolder:GetChildren()[math.random(1, #zombiesFolder:GetChildren())]
+
+                    -- Check if the model has a HumanoidRootPart
+                    local humanoidRootPart = randomZombie:FindFirstChild("HumanoidRootPart")
+                    if humanoidRootPart then
+                        -- Get the position of the HumanoidRootPart and add a Y offset of 15 studs
+                        local targetPosition = humanoidRootPart.Position + Vector3.new(0, 13.5, 0)
+
+                        -- Teleport the player to the new position
+                        playerCharacter:SetPrimaryPartCFrame(CFrame.new(targetPosition))
+                    else
+                        warn("Random zombie model does not have a HumanoidRootPart.")
+                    end
+                else
+                    warn("No zombies found in the Zombies folder.")
+
+                    -- If no zombies are found, teleport the player to the sky
+                    local skyPosition = Vector3.new(0, 1000, 0) -- Sky position
+                    playerCharacter:SetPrimaryPartCFrame(CFrame.new(skyPosition))
+                end
+            else
+                warn("Player does not have a valid HumanoidRootPart or Humanoid.")
+            end
+        else
+            warn("Player's character is not fully loaded.")
+        end
+
+        wait(0.1)
     end
 end
 
-      wait(0.15)  
-    end
+-- Function to stop teleportation, restore collisions, and re-enable gravity for the player
+function stopTpZombies()
+    -- Enable collisions for all parts in workspace.Map
+    local map = game.Workspace:WaitForChild("Map")
+    for _, part in pairs(map:GetDescendants()) do
+        if part:IsA("BasePart") then
+            part.CanCollide = true
+        end
     end
 
+    -- Re-enable gravity and stop PlatformStand
+    local playerCharacter = game:GetService("Players").LocalPlayer.Character
+    if playerCharacter then
+        local humanoidRootPartPlayer = playerCharacter:FindFirstChild("HumanoidRootPart")
+        local humanoid = playerCharacter:FindFirstChild("Humanoid")
+        if humanoidRootPartPlayer and humanoid then
+            -- Re-enable gravity and disable PlatformStand
+            humanoid.PlatformStand = false
+            humanoidRootPartPlayer.Velocity = Vector3.new(0, 0, 0)  -- Reset velocity
+        end
+    end
+end
 
 sections.Section2:AddToggle({
     text = "Teleport to Zombies",
     flag = "Toggle_1",
     callback = function(v)
         _G.TpZombies = v
-        TpZombies()
+        if _G.TpZombies then
+            TpZombies()
+        else
+            stopTpZombies()
+        end
     end
 })
+
+
+
+
 
 _G.TpSurvivors = true
 
