@@ -1,6 +1,6 @@
 -- Credits To The Original Devs @xz, @goof
 getgenv().Config = {
-	Invite = "Sync.wtf",
+	Invite = "Sync.wtf - Ready 2 die 0.0.4c",
 	Version = "0.6",
 }
 
@@ -346,6 +346,8 @@ end
 
 
 
+
+
 sections.Section1:AddToggle({
     text = "Snowball auto shoot",
     flag = "Toggle_1",
@@ -358,14 +360,93 @@ sections.Section1:AddToggle({
 
 
 
+
+_G.KingStreet = true
+
+function KingStreet()
+    while _G.KingStreet == true do
+-- Get the Players service
+local Players = game:GetService("Players")
+
+-- Find the "wheel" part in the NoRay workspace
+local workspaceNoRay = game.Workspace.NoRay
+local wheelPart = workspaceNoRay:FindFirstChild("wheel")
+
+-- Check if the "wheel" part exists
+if wheelPart then
+    -- Get the local player (assuming this is running on the client)
+    local player = Players.LocalPlayer
+
+    -- Teleport to the "wheel" part
+    player.Character:SetPrimaryPartCFrame(wheelPart.CFrame)
+    
+    -- Wait for 0.5 seconds
+    wait(0.5)
+    
+    -- Find the "wheel" parts in the truck's wheels
+    local truck = game.Workspace.Map.Truck.KingstreetTruck
+    local wheels = truck:WaitForChild("Wheels")
+
+    -- Loop through all parts named "wheel" and teleport to each one
+    for _, part in pairs(wheels:GetChildren()) do
+        if part.Name == "wheel" then
+            player.Character:SetPrimaryPartCFrame(part.CFrame)
+            wait(0.5)  -- Wait for 0.5 seconds before teleporting to the next one
+        end
+    end
+    
+    -- Teleport to the truck's position after the loop
+    player.Character:SetPrimaryPartCFrame(truck.CFrame)
+else
+    warn("No wheel part found in NoRay workspace.")
+end
+
+        wait(1)
+    end
+end
+
+
+
+
+
+sections.Section1:AddToggle({
+    text = "Auto complete Kingstreet campaign",
+    flag = "Toggle_1",
+    callback = function(v)
+        _G.KingStreet  = v
+        KingStreet()
+    end
+})
+
+
+
+
+
+
 _G.TicketFarm = true
 
 function TicketFarm()
+    local lastTicket = nil -- Store the last ticket part
+    local repeatCount = 0 -- Count consecutive visits to the same part
+
     while _G.TicketFarm == true do
         local workspace = game:GetService("Workspace") -- Get the Workspace service
         local players = game:GetService("Players") -- Get the Players service
         local noRayFolder = workspace:WaitForChild("NoRay") -- Find the NoRay folder
         local ticketPart = noRayFolder:FindFirstChild("Ticket") -- Try to find the part named "Ticket"
+
+        -- Skip the ticket if visited more than 5 times consecutively
+        if ticketPart and ticketPart == lastTicket then
+            repeatCount += 1
+            if repeatCount > 5 then
+                wait(0.1) -- Slight delay before checking again
+                continue -- Skip this iteration
+            end
+        else
+            -- Reset the repeat count and update the last ticket
+            repeatCount = 0
+            lastTicket = ticketPart
+        end
 
         local targetPosition
 
@@ -377,69 +458,57 @@ function TicketFarm()
             targetPosition = Vector3.new(0, 1000, 0)
         end
 
-        -- Teleport the character (or specific model) to the target position
+        -- Teleport the character (or specific model) to the target position using Lerp
         local character = players.LocalPlayer.Character
         if character then
-            -- Set the character's velocity to zero to prevent fall damage
-            local humanoid = character:FindFirstChild("Humanoid")
-            if humanoid then
-                humanoid.PlatformStand = true  -- Disable movement to prevent sudden velocity changes
-            end
-
-            -- Set velocity to zero
-            local bodyVelocity = character:FindFirstChildOfClass("BodyVelocity")
-            if not bodyVelocity then
-                bodyVelocity = Instance.new("BodyVelocity")
-                bodyVelocity.Velocity = Vector3.new(0, 0, 0)
-                bodyVelocity.Parent = character.PrimaryPart
-            else
-                bodyVelocity.Velocity = Vector3.new(0, 0, 0)
-            end
-
-            -- Teleport the character to the target position
-            character:SetPrimaryPartCFrame(CFrame.new(targetPosition)) -- Teleport the character to the target position
-
-            -- Disable collision for the Torso and HumanoidRootPart
-            local torso = character:FindFirstChild("UpperTorso") or character:FindFirstChild("LowerTorso")
+            -- Ensure the character has a HumanoidRootPart
             local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
-
-            if torso then
-                torso.CanCollide = false -- Disable collision for the Torso
-            end
             if humanoidRootPart then
-                humanoidRootPart.CanCollide = false -- Disable collision for the HumanoidRootPart
+                -- Set the Lerp parameters
+                local startPosition = humanoidRootPart.Position
+                local steps = 5 -- Number of interpolation steps (higher value for smoother movement)
+                local duration = 0.2 -- Total time to complete the teleport (in seconds)
+                local stepDuration = duration / steps -- Time per step
+
+                -- Add a BodyVelocity to set velocity to 0
+                local bodyVelocity = Instance.new("BodyVelocity")
+                bodyVelocity.Velocity = Vector3.zero
+                bodyVelocity.MaxForce = Vector3.new(100000, 100000, 100000) -- High force to stabilize
+                bodyVelocity.Parent = humanoidRootPart
+
+                -- Disable collision during teleportation
+                humanoidRootPart.CanCollide = false
+
+                -- Smooth Lerp movement with wobble effect
+                for i = 1, steps do
+                    -- Calculate the interpolation progress
+                    local progress = i / steps
+                    -- Add wobble effect
+                    local wobbleOffset = Vector3.new(
+                        math.random(-5, 5) * 0.1, -- Small random x offset
+                        math.random(-5, 5) * 0.1, -- Small random y offset
+                        math.random(-5, 5) * 0.1  -- Small random z offset
+                    )
+                    local wobblePosition = targetPosition + wobbleOffset
+
+                    -- Move the HumanoidRootPart incrementally
+                    humanoidRootPart.CFrame = CFrame.new(startPosition:Lerp(wobblePosition, progress))
+
+                    wait(stepDuration) -- Wait for the next step
+                end
+
+                -- Ensure the final position is exactly the target position
+                humanoidRootPart.CFrame = CFrame.new(targetPosition)
+
+                -- Cleanup: Remove BodyVelocity and re-enable collision
+                bodyVelocity:Destroy()
+                humanoidRootPart.CanCollide = true
             end
-
-            -- Re-enable movement after teleportation
-            if humanoid then
-                humanoid.PlatformStand = false  -- Re-enable movement
-                humanoid.Sit = true -- Make the character sit down
-                humanoid.Jump = true -- Make the character jump
-            end
         end
 
-        wait(0.1)
-    end
-
-    -- Cleanup: Reset the character's velocity and remove the BodyVelocity instance
-    local character = players.LocalPlayer.Character
-    if character then
-        local bodyVelocity = character:FindFirstChildOfClass("BodyVelocity")
-        if bodyVelocity then
-            bodyVelocity:Destroy() -- Remove the BodyVelocity instance
-        end
-
-        local humanoid = character:FindFirstChild("Humanoid")
-        if humanoid then
-            humanoid.PlatformStand = false -- Re-enable normal movement
-        end
-        wait(0.001)
+        wait(0.1) -- Add slight delay for smoother wobbling
     end
 end
-
-
-
-
 
 sections.Section2:AddToggle({
     text = "Ticket farm",
@@ -1039,7 +1108,7 @@ end
 
 
 sections.Section1:AddToggle({
-    text = "Kill all (Brute)",
+    text = "Kill all (Brute) BROKEN!",
     flag = "Toggle_1",
     callback = function(v)
         _G.SpamClub  = v
@@ -1392,7 +1461,7 @@ local targetFOV = 120
 game:GetService("RunService").RenderStepped:Connect(function()
     camera.FieldOfView = targetFOV
 end)
-wait(0.00001)
+wait(0.5)
 end 
 
 
@@ -1467,100 +1536,109 @@ sections.Section1:AddToggle({
     end
 })
 
+
+
+_G.HighlightAll = true
+
 function highlight()
+    while _G.HighlightAll == true do
     local FillColor = Color3.fromRGB(255, 0, 0)  -- Default color for Zombies and NPCs
-local DepthMode = "AlwaysOnTop"
-local FillTransparency = 0.5
-local OutlineColor = Color3.fromRGB(0, 0, 0)
-local OutlineTransparency = 0
-
-local SurvivorFillColor = Color3.fromRGB(0, 255, 0)  -- New color for Survivors (green)
-
-local CoreGui = game:FindService("CoreGui")
-local Players = game:FindService("Players")
-local lp = Players.LocalPlayer
-local connections = {}
-
-local Storage = Instance.new("Folder")
-Storage.Parent = CoreGui
-Storage.Name = "Highlight_Storage"
-
--- Function to check if a model belongs to the local player
-local function IsLocalPlayer(model)
-    return model:IsDescendantOf(lp.Character)
-end
-
--- Function to highlight any given model with a specified color
-local function HighlightModel(model, fillColor)
-    -- Skip highlighting if the model is the local player
-    if IsLocalPlayer(model) then return end
-
-    local Highlight = Instance.new("Highlight")
-    Highlight.Name = model.Name
-    Highlight.FillColor = fillColor or FillColor  -- Use the color passed in, or default to the FillColor
-    Highlight.DepthMode = DepthMode
-    Highlight.FillTransparency = FillTransparency
-    Highlight.OutlineColor = OutlineColor
-    Highlight.OutlineTransparency = OutlineTransparency
-    Highlight.Parent = Storage
-
-    Highlight.Adornee = model
-end
-
--- Function to apply highlight to models in a given folder
-local function HighlightCharactersInFolder(folder, fillColor)
-    for _, model in pairs(folder:GetChildren()) do
+    local DepthMode = "AlwaysOnTop"
+    local FillTransparency = 0.5
+    local OutlineColor = Color3.fromRGB(0, 0, 0)
+    local OutlineTransparency = 0
+    
+    local SurvivorFillColor = Color3.fromRGB(0, 0, 255)  -- New color for Survivors (green)
+    
+    local CoreGui = game:FindService("CoreGui")
+    local Players = game:FindService("Players")
+    local lp = Players.LocalPlayer
+    local connections = {}
+    
+    local Storage = Instance.new("Folder")
+    Storage.Parent = CoreGui
+    Storage.Name = "Highlight_Storage"
+    
+    -- Function to check if a model belongs to the local player (only client-side)
+    local function IsLocalPlayer(model)
+        if game:GetService("RunService"):IsClient() then
+            return model:IsDescendantOf(lp.Character)
+        end
+        return false
+    end
+    
+    -- Function to highlight any given model with a specified color
+    local function HighlightModel(model, fillColor)
+        -- Skip highlighting if the model is the local player
+        if IsLocalPlayer(model) then return end
+    
+        local Highlight = Instance.new("Highlight")
+        Highlight.Name = model.Name
+        Highlight.FillColor = fillColor or FillColor  -- Use the color passed in, or default to the FillColor
+        Highlight.DepthMode = DepthMode
+        Highlight.FillTransparency = FillTransparency
+        Highlight.OutlineColor = OutlineColor
+        Highlight.OutlineTransparency = OutlineTransparency
+        Highlight.Parent = Storage
+    
+        Highlight.Adornee = model
+    end
+    
+    -- Function to apply highlight to models in a given folder
+    local function HighlightCharactersInFolder(folder, fillColor)
+        for _, model in pairs(folder:GetChildren()) do
+            if model:IsA("Model") then
+                HighlightModel(model, fillColor)
+            end
+        end
+    end
+    
+    -- Set up highlighting when characters are added to any folder
+    local function OnCharacterAdded(model, fillColor)
         if model:IsA("Model") then
             HighlightModel(model, fillColor)
         end
     end
-end
-
--- Set up highlighting when characters are added to any folder
-local function OnCharacterAdded(model, fillColor)
-    if model:IsA("Model") then
-        HighlightModel(model, fillColor)
-    end
-end
-
--- Highlight models in specified folders
-HighlightCharactersInFolder(workspace.Characters.Survivors, SurvivorFillColor)  -- Apply different color to Survivors
-HighlightCharactersInFolder(workspace.Characters.Zombies, FillColor)  -- Default color for Zombies
-HighlightCharactersInFolder(workspace.Characters.NPC, FillColor)  -- Default color for NPCs
-HighlightCharactersInFolder(workspace.NoRay, FillColor)  -- Highlight models in NoRay folder
-
--- Connect to the folders to apply highlights when new models are added
-workspace.Characters.Survivors.ChildAdded:Connect(function(model)
-    OnCharacterAdded(model, SurvivorFillColor)  -- Apply Survivor color
-end)
-
-workspace.Characters.Zombies.ChildAdded:Connect(function(model)
-    OnCharacterAdded(model, FillColor)  -- Default color for Zombies
-end)
-
-workspace.Characters.NPC.ChildAdded:Connect(function(model)
-    OnCharacterAdded(model, FillColor)  -- Default color for NPCs
-end)
-
-workspace.NoRay.ChildAdded:Connect(function(model)
-    OnCharacterAdded(model, FillColor)  -- Default color for NoRay folder
-end)
-
--- Handle removal of models and clean up highlights
-local function OnCharacterRemoved(model)
-    if Storage:FindFirstChild(model.Name) then
-        Storage[model.Name]:Destroy()
-    end
-end
-
-workspace.Characters.Survivors.ChildRemoved:Connect(OnCharacterRemoved)
-workspace.Characters.Zombies.ChildRemoved:Connect(OnCharacterRemoved)
-workspace.Characters.NPC.ChildRemoved:Connect(OnCharacterRemoved)
-workspace.NoRay.ChildRemoved:Connect(OnCharacterRemoved)
-
-
-
     
+    -- Highlight models in specified folders
+    HighlightCharactersInFolder(workspace.Characters.Survivors, SurvivorFillColor)  -- Apply different color to Survivors
+    HighlightCharactersInFolder(workspace.Characters.Zombies, FillColor)  -- Default color for Zombies
+    HighlightCharactersInFolder(workspace.Characters.NPC, FillColor)  -- Default color for NPCs
+    HighlightCharactersInFolder(workspace.NoRay, FillColor)  -- Highlight models in NoRay folder
+    
+    -- Connect to the folders to apply highlights when new models are added
+    workspace.Characters.Survivors.ChildAdded:Connect(function(model)
+        OnCharacterAdded(model, SurvivorFillColor)  -- Apply Survivor color
+    end)
+    
+    workspace.Characters.Zombies.ChildAdded:Connect(function(model)
+        OnCharacterAdded(model, FillColor)  -- Default color for Zombies
+    end)
+    
+    workspace.Characters.NPC.ChildAdded:Connect(function(model)
+        OnCharacterAdded(model, FillColor)  -- Default color for NPCs
+    end)
+    
+    workspace.NoRay.ChildAdded:Connect(function(model)
+        OnCharacterAdded(model, FillColor)  -- Default color for NoRay folder
+    end)
+    
+    -- Handle removal of models and clean up highlights
+    local function OnCharacterRemoved(model)
+        if Storage:FindFirstChild(model.Name) then
+            Storage[model.Name]:Destroy()
+        end
+    end
+    
+    workspace.Characters.Survivors.ChildRemoved:Connect(OnCharacterRemoved)
+    workspace.Characters.Zombies.ChildRemoved:Connect(OnCharacterRemoved)
+    workspace.Characters.NPC.ChildRemoved:Connect(OnCharacterRemoved)
+    workspace.NoRay.ChildRemoved:Connect(OnCharacterRemoved)
+    wait(0.5)
+    
+
+
+end
 
 
 end
