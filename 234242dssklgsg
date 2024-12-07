@@ -433,32 +433,38 @@ function TicketFarm()
         local workspace = game:GetService("Workspace") -- Get the Workspace service
         local players = game:GetService("Players") -- Get the Players service
         local noRayFolder = workspace:WaitForChild("NoRay") -- Find the NoRay folder
-        local ticketPart = noRayFolder:FindFirstChild("Ticket") -- Try to find the part named "Ticket"
-
-        -- Skip the ticket if visited more than 5 times consecutively
-        if ticketPart and ticketPart == lastTicket then
-            repeatCount += 1
-            if repeatCount > 5 then
-                wait(0.1) -- Slight delay before checking again
-                continue -- Skip this iteration
+        local ticketParts = noRayFolder:GetChildren() -- Get all children in NoRay folder
+        local ticketPart = nil
+        
+        -- Find the next available "Ticket" part
+        for _, part in ipairs(ticketParts) do
+            if part.Name == "Ticket" then
+                -- If a ticket part has already been visited, check if we should skip it
+                if part == lastTicket then
+                    repeatCount += 1
+                    if repeatCount > 5 then
+                        -- Skip this ticket and move to the next one
+                        continue
+                    end
+                else
+                    -- Reset repeat count if we find a new ticket
+                    repeatCount = 0
+                    lastTicket = part
+                    ticketPart = part
+                    break
+                end
             end
-        else
-            -- Reset the repeat count and update the last ticket
-            repeatCount = 0
-            lastTicket = ticketPart
         end
-
-        local targetPosition
-
-        if ticketPart then
-            -- If "Ticket" is found, use its position to teleport
-            targetPosition = ticketPart.Position
-        else
-            -- If "Ticket" is not found, teleport to the sky position (0, 1000, 0)
-            targetPosition = Vector3.new(0, 1000, 0)
+        
+        -- If no "Ticket" part was found or all parts have been skipped, teleport to a fallback position
+        if not ticketPart then
+            print("No available ticket parts to teleport to, skipping iteration.")
+            wait(0.1)
+            continue -- Skip this iteration
         end
-
-        -- Teleport the character (or specific model) to the target position using Lerp
+        
+        -- Teleport the character to the next "Ticket" part using Lerp
+        local targetPosition = ticketPart.Position
         local character = players.LocalPlayer.Character
         if character then
             -- Ensure the character has a HumanoidRootPart
@@ -466,8 +472,8 @@ function TicketFarm()
             if humanoidRootPart then
                 -- Set the Lerp parameters
                 local startPosition = humanoidRootPart.Position
-                local steps = 5 -- Number of interpolation steps (higher value for smoother movement)
-                local duration = 0.2 -- Total time to complete the teleport (in seconds)
+                local steps = 5 -- Number of interpolation steps (for smoother movement)
+                local duration = 0.18 -- Total time to complete the teleport (in seconds)
                 local stepDuration = duration / steps -- Time per step
 
                 -- Add a BodyVelocity to set velocity to 0
@@ -479,25 +485,27 @@ function TicketFarm()
                 -- Disable collision during teleportation
                 humanoidRootPart.CanCollide = false
 
-                -- Smooth Lerp movement with wobble effect
+                -- Smooth Lerp movement with wobble
                 for i = 1, steps do
                     -- Calculate the interpolation progress
                     local progress = i / steps
-                    -- Add wobble effect
+                    
+                    -- Add wobble effect: Random small offset in x, y, z axes
                     local wobbleOffset = Vector3.new(
-                        math.random(-5, 5) * 0.1, -- Small random x offset
-                        math.random(-5, 5) * 0.1, -- Small random y offset
-                        math.random(-5, 5) * 0.1  -- Small random z offset
+                        math.random(-5, 5) * 0.5,  -- Small random x offset
+                        math.random(-5, 5) * 0.5,  -- Small random y offset
+                        math.random(-5, 5) * 0.5   -- Small random z offset
                     )
-                    local wobblePosition = targetPosition + wobbleOffset
+
+                    -- Apply wobble and Lerp the movement
+                    local wobblePosition = startPosition:Lerp(targetPosition, progress) + wobbleOffset
 
                     -- Move the HumanoidRootPart incrementally
-                    humanoidRootPart.CFrame = CFrame.new(startPosition:Lerp(wobblePosition, progress))
-
+                    humanoidRootPart.CFrame = CFrame.new(wobblePosition)
                     wait(stepDuration) -- Wait for the next step
                 end
 
-                -- Ensure the final position is exactly the target position
+                -- Ensure the final position is exactly the target position (with no wobble)
                 humanoidRootPart.CFrame = CFrame.new(targetPosition)
 
                 -- Cleanup: Remove BodyVelocity and re-enable collision
@@ -520,6 +528,7 @@ sections.Section2:AddToggle({
         end
     end
 })
+
 
 
 
@@ -1723,6 +1732,8 @@ sections.Section2:AddToggle({
 
 
 library:SendNotification("Updated logs: Added Auto Complete KingStreet", 5, Color3.new(255, 0, 0))
+library:SendNotification("Updated logs: Fixed and improved alot of features", 5, Color3.new(255, 0, 0))
+
 
 
 library:SendNotification("Sync.wtf Succesfully Loaded!", 5, Color3.new(255, 0, 0))
