@@ -358,6 +358,41 @@ sections.Section1:AddToggle({
 })
 
 
+
+_G.AntiLag = true
+function AntiLag()
+    while _G.AntiLag == true do 
+        -- Get the "NoRay" workspace
+local noRayWorkspace = game.Workspace:FindFirstChild("NoRay")
+
+-- Check if the "NoRay" workspace exists
+if noRayWorkspace then
+    -- Loop through all the objects in the "NoRay" workspace
+    for _, part in pairs(noRayWorkspace:GetChildren()) do
+        -- Check if the object's name is "Ticket"
+        if part.Name == "Ticket" then
+            -- Destroy the "Ticket" part
+            part:Destroy()
+        end
+    end
+else
+    -- If "NoRay" doesn't exist, print a message
+    warn("NoRay workspace not found.")
+end
+
+    end
+end
+
+
+sections.Section2:AddToggle({
+    text = "Anti Lag (Removes tickets)",
+    flag = "Toggle_1",
+    callback = function(v)
+        _G.AntiLag  = v
+        AntiLag()
+    end
+})
+
 _G.AntiRadiation = true
 
 function AntiRadiation()
@@ -409,41 +444,6 @@ end
         wait(1)
     end
 end
-
-_G.AntiLag = true
-function AntiLag()
-    while _G.AntiLag == true do 
-        -- Get the "NoRay" workspace
-local noRayWorkspace = game.Workspace:FindFirstChild("NoRay")
-
--- Check if the "NoRay" workspace exists
-if noRayWorkspace then
-    -- Loop through all the objects in the "NoRay" workspace
-    for _, part in pairs(noRayWorkspace:GetChildren()) do
-        -- Check if the object's name is "Ticket"
-        if part.Name == "Ticket" then
-            -- Destroy the "Ticket" part
-            part:Destroy()
-        end
-    end
-else
-    -- If "NoRay" doesn't exist, print a message
-    warn("NoRay workspace not found.")
-end
-
-    end
-end
-
-
-sections.Section2:AddToggle({
-    text = "Anti Lag (Removes tickets)",
-    flag = "Toggle_1",
-    callback = function(v)
-        _G.AntiLag  = v
-        AntiLag()
-    end
-})
-
 
 
 
@@ -558,7 +558,7 @@ function TicketFarm()
     end
 
     -- Get the initial ticket count
-    local initialTickets = game:GetService("Players").LocalPlayer.SETTINGS.Tickets.Value
+    local initialTickets = game:GetService("Players").LocalPlayer..Tickets.Value
     local previousTicketCount = initialTickets
 
     while _G.TicketFarm == true do
@@ -1845,69 +1845,54 @@ ESP.Teamcheck = true;
 
 -- Assuming you're using a UI library where sections and toggles are defined.
 
-_G.AmbienceChanger = true
+-- Assuming you're using a UI library where sections and toggles are defined.
 
--- Function to apply ambience continuously while _G.AmbienceChanger is true
-function AmbienceChanger()
-    local Lighting = game:GetService("Lighting")
+local Lighting = game:GetService("Lighting")
 
-    while _G.AmbienceChanger == true do
-        -- Apply the ambience each loop
-        applyPurpleAmbience()
-
-        -- Wait a small amount of time to make the changes happen continuously
-        wait(1)
-    end
-end
-
--- Function to apply the purple ambience (lighter, more white)
+-- Define the functions for applying and reverting the ambience
 local function applyPurpleAmbience()
-    local Lighting = game:GetService("Lighting")
-
-    -- Adjust the purple to a more white-ish shade
-    Lighting.Ambient = Color3.fromRGB(180, 140, 180)  -- Lighter purple (more white)
-    Lighting.OutdoorAmbient = Color3.fromRGB(120, 90, 140)  -- Lighter purple
-    Lighting.ColorShift_Bottom = Color3.fromRGB(90, 70, 100)  -- Lighter shift
-    Lighting.ColorShift_Top = Color3.fromRGB(190, 120, 190)  -- Lighter top shift
-    Lighting.Brightness = 2  -- Brightness remains the same
-    Lighting.ClockTime = 19  -- Set time to evening
-    Lighting.FogColor = Color3.fromRGB(120, 90, 140)  -- Lighter fog
-    Lighting.FogEnd = 200  -- Fog end distance
+    Lighting.Ambient = Color3.fromRGB(128, 0, 128)
+    Lighting.OutdoorAmbient = Color3.fromRGB(75, 0, 130)
+    Lighting.ColorShift_Bottom = Color3.fromRGB(48, 0, 64)
+    Lighting.ColorShift_Top = Color3.fromRGB(153, 51, 153)
+    Lighting.Brightness = 2
+    Lighting.ClockTime = 19
+    Lighting.FogColor = Color3.fromRGB(75, 0, 130)
+    Lighting.FogEnd = 200
     print("Purple ambience applied!")
 end
 
--- Function to revert to default ambience
 local function revertAmbience()
-    local Lighting = game:GetService("Lighting")
-
-    Lighting.Ambient = Color3.fromRGB(127, 127, 127)  -- Default grey
-    Lighting.OutdoorAmbient = Color3.fromRGB(127, 127, 127)  -- Default grey
-    Lighting.ColorShift_Bottom = Color3.fromRGB(0, 0, 0)  -- Default black
-    Lighting.ColorShift_Top = Color3.fromRGB(0, 0, 0)  -- Default black
-    Lighting.Brightness = 2  -- Default brightness
-    Lighting.ClockTime = 12  -- Noon time
-    Lighting.FogColor = Color3.fromRGB(255, 255, 255)  -- Default white fog
-    Lighting.FogEnd = 100000  -- No fog
+    Lighting.Ambient = Color3.fromRGB(127, 127, 127) -- Default grey
+    Lighting.OutdoorAmbient = Color3.fromRGB(127, 127, 127) -- Default grey
+    Lighting.ColorShift_Bottom = Color3.fromRGB(0, 0, 0) -- Default black
+    Lighting.ColorShift_Top = Color3.fromRGB(0, 0, 0) -- Default black
+    Lighting.Brightness = 2 -- Default brightness
+    Lighting.ClockTime = 12 -- Noon time
+    Lighting.FogColor = Color3.fromRGB(255, 255, 255) -- Default white fog
+    Lighting.FogEnd = 100000 -- Practically no fog
     print("Ambience reverted to default!")
 end
 
--- Add the toggle to the UI section
+-- Add the toggle to the section within your UI framework
 sections.Section1:AddToggle({
-    text = "Ambience Changer",  -- Toggle label
-    flag = "Toggle_1",  -- Unique flag for the toggle
+    text = "Ambience changer", 
+    flag = "Toggle_1",
     callback = function(isEnabled)
-        local Lighting = game:GetService("Lighting")
-
-        -- If toggle is enabled, start the ambiance change loop
         if isEnabled then
-            _G.AmbienceChanger = true
-            AmbienceChanger()  -- Start applying ambience continuously
+            applyPurpleAmbience()  -- Apply the purple ambience when the toggle is true
         else
-            _G.AmbienceChanger = false
-            revertAmbience()  -- Revert the ambience immediately
+            revertAmbience()  -- Revert to the default lighting when the toggle is false
         end
     end
 })
+
+-- This script is contained within the toggle section, ensuring no interference with other scripts.
+
+
+
+
+
 -------------------------------------------------------------------
 -- Initialize the global toggle if it doesn't exist
 if not _G.ForceFieldnCharacter then
@@ -1951,6 +1936,10 @@ function ForceFieldnCharacter()
         wait(0.1)  -- Update every 0.1 seconds to avoid performance issues
     end
 end
+
+
+
+
 
 -- Adding toggle to the UI
 sections.Section1:AddToggle({
