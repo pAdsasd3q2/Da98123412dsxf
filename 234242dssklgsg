@@ -1084,7 +1084,7 @@ function TpSurvivors()
             local humanoidRootPart = randomSurvivor:FindFirstChild("HumanoidRootPart")
             if humanoidRootPart then
                 -- Get the position of the HumanoidRootPart and add a Y offset of 12.5 studs
-                local targetPosition = humanoidRootPart.Position + Vector3.new(0, 12.5, 0)
+                local targetPosition = humanoidRootPart.Position + Vector3.new(0, -10, 0)
 
                 -- Get the player's character
                 local playerCharacter = game:GetService("Players").LocalPlayer.Character
