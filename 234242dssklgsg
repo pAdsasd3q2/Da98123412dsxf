@@ -8,7 +8,7 @@ getgenv().luaguardvars = {
 	DiscordName = "4stud on discord",
 }
 
-local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/Yield1111/Ui-lib/refs/heads/main/Ui%20lib"))()
+local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/Yield1111/Ui-lib/refs/heads/main/Ui%20lib%202"))()
 
 library:init() -- Initalizes Library Do Not Delete This
 
@@ -393,68 +393,7 @@ sections.Section2:AddToggle({
     end
 })
 
-_G.AntiRadiation = true
 
-function AntiRadiation()
-    while _G.AntiRadiation == true do
-            -- Get the Players service
-local Players = game:GetService("Players")
-
--- Get the local player
-local player = Players.LocalPlayer
-
--- Find the player's character in the Survivors folder
-local character = workspace.Characters.Survivors:FindFirstChild(player.Name)
-
--- Check if the character exists and if the player has a hat named "Armor"
-if character then
-    local armorHat = character:FindFirstChild("Armor")  -- Check if the player has a hat named "Armor"
-    
-    if armorHat then
-        -- Check if the SETTINGS folder exists inside the Armor hat
-        local settingsFolder = armorHat:FindFirstChild("SETTINGS")
-        
-        if settingsFolder then
-            -- Check if the Radiation NumberValue already exists
-            local existingRadiation = settingsFolder:FindFirstChild("Radiation")
-            
-            if not existingRadiation then
-                -- If it doesn't exist, create the Radiation NumberValue
-                local radiationValue = Instance.new("NumberValue")
-                radiationValue.Name = "Radiation"
-                radiationValue.Value = 1
-                radiationValue.Parent = settingsFolder  -- Parent it to the SETTINGS folder
-
-                print("Radiation value set to 1 in SETTINGS!")
-            else
-                -- If the Radiation NumberValue already exists, update its value
-                existingRadiation.Value = 1
-                print("Radiation value already exists, updated to 1!")
-            end
-        else
-            print("SETTINGS folder not found inside Armor!")
-        end
-    else
-        print("Player does not have the 'Armor' hat.")
-    end
-else
-    print("Character not found in Survivors.")
-end
-
-        wait(1)
-    end
-end
-
-
-
-sections.Section2:AddToggle({
-    text = "Anti Radiation",
-    flag = "Toggle_1",
-    callback = function(v)
-        _G.AntiRadiation  = v
-        AntiRadiation()
-    end
-})
 
 
 
@@ -1733,7 +1672,7 @@ if player then
                     part.Material = Enum.Material.ForceField
                     
                     -- Change the color to red
-                    part.Color = Color3.fromRGB(255, 0, 0)  -- RGB for red
+                    part.Color = Color3.fromRGB(128, 0, 128)  -- RGB for red
                 end
             end
         end
@@ -1897,8 +1836,6 @@ sections.Section1:AddToggle({
     end
 })
 
--- This script is contained within the toggle section, ensuring no interference with other scripts.
-
 
 
 
@@ -1972,6 +1909,15 @@ sections.Section1:AddToggle({
 
 
 
+sections.Section1:AddSeparator({
+    enabled = true,
+    text = "Misc"
+})
+
+
+
+
+
 
 
 sections.Section1:AddSeparator({
@@ -2003,7 +1949,7 @@ sections.Section1:AddButton({
     enabled = true,
     text = "Hydroxide",
     flag = "Button_1",
-    tooltip = "inf yield",
+    tooltip = "",
     confirm = true,
     risky = false,
     callback = function()     
@@ -2020,6 +1966,8 @@ sections.Section1:AddButton({
             end
 })
 
+
+
 sections.Section1:AddButton({
     enabled = true,
     text = "Dex",
@@ -2028,10 +1976,6 @@ sections.Section1:AddButton({
     confirm = true,
     risky = false,
     callback = function()     
-
---[[
-	WARNING: Heads up! This script has not been verified by ScriptBlox. Use at your own risk!
-]]
 loadstring(game:HttpGet("https://raw.githubusercontent.com/HummingBird8/HummingRn/main/OptimizedDexForSolara.lua"))()
             end
         
