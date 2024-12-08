@@ -358,6 +358,71 @@ sections.Section1:AddToggle({
 })
 
 
+_G.AntiRadiation = true
+
+function AntiRadiation()
+    while _G.AntiRadiation == true do
+            -- Get the Players service
+local Players = game:GetService("Players")
+
+-- Get the local player
+local player = Players.LocalPlayer
+
+-- Find the player's character in the Survivors folder
+local character = workspace.Characters.Survivors:FindFirstChild(player.Name)
+
+-- Check if the character exists and if the player has a hat named "Armor"
+if character then
+    local armorHat = character:FindFirstChild("Armor")  -- Check if the player has a hat named "Armor"
+    
+    if armorHat then
+        -- Check if the SETTINGS folder exists inside the Armor hat
+        local settingsFolder = armorHat:FindFirstChild("SETTINGS")
+        
+        if settingsFolder then
+            -- Check if the Radiation NumberValue already exists
+            local existingRadiation = settingsFolder:FindFirstChild("Radiation")
+            
+            if not existingRadiation then
+                -- If it doesn't exist, create the Radiation NumberValue
+                local radiationValue = Instance.new("NumberValue")
+                radiationValue.Name = "Radiation"
+                radiationValue.Value = 1
+                radiationValue.Parent = settingsFolder  -- Parent it to the SETTINGS folder
+
+                print("Radiation value set to 1 in SETTINGS!")
+            else
+                -- If the Radiation NumberValue already exists, update its value
+                existingRadiation.Value = 1
+                print("Radiation value already exists, updated to 1!")
+            end
+        else
+            print("SETTINGS folder not found inside Armor!")
+        end
+    else
+        print("Player does not have the 'Armor' hat.")
+    end
+else
+    print("Character not found in Survivors.")
+end
+
+        wait(1)
+    end
+end
+
+
+
+
+
+sections.Section2:AddToggle({
+    text = "Anti Radiation",
+    flag = "Toggle_1",
+    callback = function(v)
+        _G.AntiRadiation  = v
+        AntiRadiation()
+    end
+})
+
 
 
 
@@ -984,7 +1049,7 @@ function TpZombies()
                     local humanoidRootPart = randomZombie:FindFirstChild("HumanoidRootPart")
                     if humanoidRootPart then
                         -- Get the position of the HumanoidRootPart and add a Y offset of 15 studs
-                        local targetPosition = humanoidRootPart.Position + Vector3.new(0, -12.5, 0)
+                        local targetPosition = humanoidRootPart.Position + Vector3.new(0, -13.3, 0)
 
                         -- Teleport the player to the new position
                         playerCharacter:SetPrimaryPartCFrame(CFrame.new(targetPosition))
@@ -1743,6 +1808,140 @@ ESP.Teamcheck = true;
     end
 })
 
+
+
+-- Assuming you're using a UI library where sections and toggles are defined.
+
+_G.AmbienceChanger = true
+
+-- Function to apply ambience continuously while _G.AmbienceChanger is true
+function AmbienceChanger()
+    local Lighting = game:GetService("Lighting")
+
+    while _G.AmbienceChanger == true do
+        -- Apply the ambience each loop
+        applyPurpleAmbience()
+
+        -- Wait a small amount of time to make the changes happen continuously
+        wait(1)
+    end
+end
+
+-- Function to apply the purple ambience (lighter, more white)
+local function applyPurpleAmbience()
+    local Lighting = game:GetService("Lighting")
+
+    -- Adjust the purple to a more white-ish shade
+    Lighting.Ambient = Color3.fromRGB(180, 140, 180)  -- Lighter purple (more white)
+    Lighting.OutdoorAmbient = Color3.fromRGB(120, 90, 140)  -- Lighter purple
+    Lighting.ColorShift_Bottom = Color3.fromRGB(90, 70, 100)  -- Lighter shift
+    Lighting.ColorShift_Top = Color3.fromRGB(190, 120, 190)  -- Lighter top shift
+    Lighting.Brightness = 2  -- Brightness remains the same
+    Lighting.ClockTime = 19  -- Set time to evening
+    Lighting.FogColor = Color3.fromRGB(120, 90, 140)  -- Lighter fog
+    Lighting.FogEnd = 200  -- Fog end distance
+    print("Purple ambience applied!")
+end
+
+-- Function to revert to default ambience
+local function revertAmbience()
+    local Lighting = game:GetService("Lighting")
+
+    Lighting.Ambient = Color3.fromRGB(127, 127, 127)  -- Default grey
+    Lighting.OutdoorAmbient = Color3.fromRGB(127, 127, 127)  -- Default grey
+    Lighting.ColorShift_Bottom = Color3.fromRGB(0, 0, 0)  -- Default black
+    Lighting.ColorShift_Top = Color3.fromRGB(0, 0, 0)  -- Default black
+    Lighting.Brightness = 2  -- Default brightness
+    Lighting.ClockTime = 12  -- Noon time
+    Lighting.FogColor = Color3.fromRGB(255, 255, 255)  -- Default white fog
+    Lighting.FogEnd = 100000  -- No fog
+    print("Ambience reverted to default!")
+end
+
+-- Add the toggle to the UI section
+sections.Section1:AddToggle({
+    text = "Ambience Changer",  -- Toggle label
+    flag = "Toggle_1",  -- Unique flag for the toggle
+    callback = function(isEnabled)
+        local Lighting = game:GetService("Lighting")
+
+        -- If toggle is enabled, start the ambiance change loop
+        if isEnabled then
+            _G.AmbienceChanger = true
+            AmbienceChanger()  -- Start applying ambience continuously
+        else
+            _G.AmbienceChanger = false
+            revertAmbience()  -- Revert the ambience immediately
+        end
+    end
+})
+-------------------------------------------------------------------
+-- Initialize the global toggle if it doesn't exist
+if not _G.ForceFieldnCharacter then
+    _G.ForceFieldnCharacter = false
+end
+
+-- Get the Players service
+local Players = game:GetService("Players")
+
+-- Get the local player
+local player = Players.LocalPlayer
+
+-- Function to update body part material and color
+local function updateBodyParts()
+    -- Find the character in the Survivors folder
+    local character = workspace.Characters.Survivors:FindFirstChild(player.Name)
+    
+    if character then
+        for _, part in pairs(character:GetChildren()) do
+            -- Check if the part is a BasePart (such as a torso, head, etc.)
+            if part:IsA("BasePart") then
+                if _G.ForceFieldnCharacter then
+                    -- Change the material to ForceField and color to purple
+                    part.Material = Enum.Material.ForceField
+                    part.Color = Color3.fromRGB(128, 0, 128)  -- Purple
+                else
+                    -- Revert the material to Plastic and set the color to the default (white)
+                    part.Material = Enum.Material.Plastic
+                    part.Color = Color3.fromRGB(255, 255, 255)  -- White (default)
+                end
+            end
+        end
+    end
+end
+
+-- Toggle Function (to be called by the button)
+function ForceFieldnCharacter()
+    -- Continuously check and update the body parts when the toggle is on
+    while _G.ForceFieldnCharacter do
+        updateBodyParts()  -- Update the character appearance
+        wait(0.1)  -- Update every 0.1 seconds to avoid performance issues
+    end
+end
+
+-- Adding toggle to the UI
+sections.Section1:AddToggle({
+    text = "ForceField Character",  -- Toggle text
+    flag = "Toggle_1",              -- Unique flag for this toggle
+    callback = function(v)
+        -- Set the global variable based on the toggle state
+        _G.ForceFieldnCharacter = v
+
+        -- If the toggle is turned on, start updating body parts
+        if v then
+            ForceFieldnCharacter()  -- Begin updating when enabled
+        else
+            updateBodyParts()  -- Revert changes when disabled
+        end
+    end
+})
+
+
+
+
+
+
+
 sections.Section1:AddSeparator({
     enabled = true,
     text = "Misc"
@@ -1768,6 +1967,43 @@ loadstring(game:HttpGet('https://raw.githubusercontent.com/DarkNetworks/Infinite
 
 
 
+sections.Section1:AddButton({
+    enabled = true,
+    text = "Hydroxide",
+    flag = "Button_1",
+    tooltip = "inf yield",
+    confirm = true,
+    risky = false,
+    callback = function()     
+
+        local owner = "Upbolt"
+        local branch = "revision"
+        
+        local function webImport(file)
+            return loadstring(game:HttpGetAsync(("https://raw.githubusercontent.com/%s/Hydroxide/%s/%s.lua"):format(owner, branch, file)), file .. '.lua')()
+        end
+        
+        webImport("init")
+        webImport("ui/main")
+            end
+})
+
+sections.Section1:AddButton({
+    enabled = true,
+    text = "Dex",
+    flag = "Button_1",
+    tooltip = "inf yield",
+    confirm = true,
+    risky = false,
+    callback = function()     
+
+--[[
+	WARNING: Heads up! This script has not been verified by ScriptBlox. Use at your own risk!
+]]
+loadstring(game:HttpGet("https://raw.githubusercontent.com/HummingBird8/HummingRn/main/OptimizedDexForSolara.lua"))()
+            end
+        
+})
 
 
 
