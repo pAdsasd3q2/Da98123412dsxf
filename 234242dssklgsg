@@ -410,6 +410,39 @@ end
     end
 end
 
+_G.AntiLag = true
+function AntiLag()
+    while _G.AntiLag == true do 
+        -- Get the "NoRay" workspace
+local noRayWorkspace = game.Workspace:FindFirstChild("NoRay")
+
+-- Check if the "NoRay" workspace exists
+if noRayWorkspace then
+    -- Loop through all the objects in the "NoRay" workspace
+    for _, part in pairs(noRayWorkspace:GetChildren()) do
+        -- Check if the object's name is "Ticket"
+        if part.Name == "Ticket" then
+            -- Destroy the "Ticket" part
+            part:Destroy()
+        end
+    end
+else
+    -- If "NoRay" doesn't exist, print a message
+    warn("NoRay workspace not found.")
+end
+
+    end
+end
+
+
+sections.Section2:AddToggle({
+    text = "Anti Lag (Removes tickets)",
+    flag = "Toggle_1",
+    callback = function(v)
+        _G.AntiLag  = v
+        AntiLag()
+    end
+})
 
 
 
@@ -2047,7 +2080,7 @@ sections.Section2:AddToggle({
 
 
 
-library:SendNotification("Sync.wtf Succesfully Loaded!", 5, Color3.new(0, 255, 0))
+library:SendNotification("Sync.wtf Succesfully Loaded!", 5, Color3.new(60, 0, 255))
 wait(0.5)
 
 
