@@ -1851,27 +1851,35 @@ local Lighting = game:GetService("Lighting")
 
 -- Define the functions for applying and reverting the ambience
 local function applyPurpleAmbience()
-    Lighting.Ambient = Color3.fromRGB(128, 0, 128)
-    Lighting.OutdoorAmbient = Color3.fromRGB(75, 0, 130)
-    Lighting.ColorShift_Bottom = Color3.fromRGB(48, 0, 64)
-    Lighting.ColorShift_Top = Color3.fromRGB(153, 51, 153)
-    Lighting.Brightness = 2
-    Lighting.ClockTime = 19
-    Lighting.FogColor = Color3.fromRGB(75, 0, 130)
-    Lighting.FogEnd = 200
-    print("Purple ambience applied!")
+    if Lighting then
+        Lighting.Ambient = Color3.fromRGB(128, 0, 128)
+        Lighting.OutdoorAmbient = Color3.fromRGB(75, 0, 130)
+        Lighting.ColorShift_Bottom = Color3.fromRGB(48, 0, 64)
+        Lighting.ColorShift_Top = Color3.fromRGB(153, 51, 153)
+        Lighting.Brightness = 2
+        Lighting.ClockTime = 19
+        Lighting.FogColor = Color3.fromRGB(75, 0, 130)
+        Lighting.FogEnd = 200
+        print("Purple ambience applied!")   
+    else
+        warn("Lighting service is unavailable!")
+    end
 end
 
 local function revertAmbience()
-    Lighting.Ambient = Color3.fromRGB(127, 127, 127) -- Default grey
-    Lighting.OutdoorAmbient = Color3.fromRGB(127, 127, 127) -- Default grey
-    Lighting.ColorShift_Bottom = Color3.fromRGB(0, 0, 0) -- Default black
-    Lighting.ColorShift_Top = Color3.fromRGB(0, 0, 0) -- Default black
-    Lighting.Brightness = 2 -- Default brightness
-    Lighting.ClockTime = 12 -- Noon time
-    Lighting.FogColor = Color3.fromRGB(255, 255, 255) -- Default white fog
-    Lighting.FogEnd = 100000 -- Practically no fog
-    print("Ambience reverted to default!")
+    if Lighting then
+        Lighting.Ambient = Color3.fromRGB(127, 127, 127) -- Default grey
+        Lighting.OutdoorAmbient = Color3.fromRGB(127, 127, 127) -- Default grey
+        Lighting.ColorShift_Bottom = Color3.fromRGB(0, 0, 0) -- Default black
+        Lighting.ColorShift_Top = Color3.fromRGB(0, 0, 0) -- Default black
+        Lighting.Brightness = 2 -- Default brightness
+        Lighting.ClockTime = 12 -- Noon time
+        Lighting.FogColor = Color3.fromRGB(255, 255, 255) -- Default white fog
+        Lighting.FogEnd = 100000 -- Practically no fog
+        print("Ambience reverted to default!")
+    else
+        warn("Lighting service is unavailable!")
+    end
 end
 
 -- Add the toggle to the section within your UI framework
@@ -1880,8 +1888,10 @@ sections.Section1:AddToggle({
     flag = "Toggle_1",
     callback = function(isEnabled)
         if isEnabled then
+            print("Toggle is ON. Applying purple ambience.")
             applyPurpleAmbience()  -- Apply the purple ambience when the toggle is true
         else
+            print("Toggle is OFF. Reverting ambience.")
             revertAmbience()  -- Revert to the default lighting when the toggle is false
         end
     end
