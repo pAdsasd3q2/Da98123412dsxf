@@ -397,67 +397,125 @@ sections.Section2:AddToggle({
 
 
 
-
 _G.KingStreet = true
 
-function KingStreet()
-    while _G.KingStreet == true do
--- Get the Players service
-local Players = game:GetService("Players")
-
--- Find the "wheel" part in the NoRay workspace
-local workspaceNoRay = game.Workspace.NoRay
-local wheelPart = workspaceNoRay:FindFirstChild("wheel")
-
--- Check if the "wheel" part exists
-if wheelPart then
-    -- Get the local player (assuming this is running on the client)
-    local player = Players.LocalPlayer
-
-    -- Teleport to the "wheel" part
-    player.Character:SetPrimaryPartCFrame(wheelPart.CFrame)
-    
-    -- Wait for 0.5 seconds
-    wait(0.5)
-    
-    -- Find the "wheel" parts in the truck's wheels
-    local truck = game.Workspace.Map.Truck.KingstreetTruck
-    local wheels = truck:WaitForChild("Wheels")
-
-    -- Loop through all parts named "wheel" and teleport to each one
-    for _, part in pairs(wheels:GetChildren()) do
-        if part.Name == "wheel" then
-            player.Character:SetPrimaryPartCFrame(part.CFrame)
-            wait(0.5)  -- Wait for 0.5 seconds before teleporting to the next one
+-- Function to enable noclip (if needed) for teleporting without collision issues
+function enableNoclip(character)
+    for _, part in pairs(character:GetDescendants()) do
+        if part:IsA("BasePart") then
+            part.CanCollide = false
         end
     end
-    
-    -- Teleport to the truck's position after the loop
-    player.Character:SetPrimaryPartCFrame(truck.CFrame)
-else
-    warn("No wheel part found in NoRay workspace.")
 end
 
-        wait(0.5)
+-- Function to disable noclip (return collision back to normal)
+function disableNoclip(character)
+    for _, part in pairs(character:GetDescendants()) do
+        if part:IsA("BasePart") then
+            part.CanCollide = true
+        end
     end
 end
 
+-- Smooth Lerp movement with wobble effect
+function lerpMoveToPosition(fromPosition, toPosition, duration)
+    local steps = 20 -- Number of steps for the interpolation
+    local startTime = tick()
 
+    while tick() - startTime < duration do
+        local progress = (tick() - startTime) / duration
+        local currentPosition = fromPosition:Lerp(toPosition, progress)
 
+        -- Add wobble effect (tiny random offsets)
+        local wobbleOffset = Vector3.new(
+            math.random(-5, 5) * 0.1, -- Small random x offset
+            math.random(-5, 5) * 0.1, -- Small random y offset
+            math.random(-5, 5) * 0.1  -- Small random z offset
+        )
+        
+        -- Apply the wobble effect to the current position
+        local finalPosition = currentPosition + wobbleOffset
+        game:GetService("Players").LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(finalPosition)
 
+        wait(0.05) -- Small delay between steps
+    end
 
+    -- Ensure final position is exactly the target position
+    game:GetService("Players").LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(toPosition)
+end
+
+-- Function to teleport the character to a random part named "wheel" in workspace.NoRay
+function teleportToRandomWheel()
+    local noRayFolder = workspace:WaitForChild("NoRay")
+    local wheels = {}
+
+    -- Find all parts named "wheel"
+    for _, part in pairs(noRayFolder:GetChildren()) do
+        if part.Name == "wheel" and part:IsA("BasePart") then
+            table.insert(wheels, part)
+        end
+    end
+
+    -- If there are any wheels, teleport to one at random
+    if #wheels > 0 then
+        local randomWheel = wheels[math.random(1, #wheels)]
+        local humanoidRootPart = game:GetService("Players").LocalPlayer.Character:WaitForChild("HumanoidRootPart")
+
+        -- Use Lerp to teleport
+        lerpMoveToPosition(humanoidRootPart.Position, randomWheel.Position, 1)  -- 1 second duration
+    else
+        print("No wheels found in workspace.NoRay!")
+    end
+end
+
+-- Function to teleport to all "wheel" parts in workspace.Map.Truck.KingstreetTruck.Wheels
+function teleportToAllKingStreetWheels()
+    local kingStreetFolder = workspace:WaitForChild("Map"):WaitForChild("Truck"):WaitForChild("KingstreetTruck"):WaitForChild("Wheels")
+    local wheels = {}
+
+    -- Find all parts named "wheel"
+    for _, part in pairs(kingStreetFolder:GetChildren()) do
+        if part.Name == "wheel" and part:IsA("BasePart") then
+            table.insert(wheels, part)
+        end
+    end
+
+    -- Teleport to each "wheel" part with Lerp
+    for _, wheel in pairs(wheels) do
+        local humanoidRootPart = game:GetService("Players").LocalPlayer.Character:WaitForChild("HumanoidRootPart")
+
+        -- Use Lerp to teleport smoothly to each "wheel" part
+        lerpMoveToPosition(humanoidRootPart.Position, wheel.Position, 1)  -- 1 second duration
+    end
+end
+
+-- Function to start the process of teleportation and wobble
+function KingStreet()
+    -- First teleport to a random "wheel" in workspace.NoRay
+    teleportToRandomWheel()
+
+    -- Then teleport to all "wheel" parts in workspace.Map.Truck.KingstreetTruck.Wheels
+    teleportToAllKingStreetWheels()
+
+    -- After completing the teleportation to all wheels, teleport to the KingstreetTruck itself
+    local kingStreetTruck = workspace:WaitForChild("Map"):WaitForChild("Truck"):WaitForChild("KingstreetTruck")
+    local humanoidRootPart = game:GetService("Players").LocalPlayer.Character:WaitForChild("HumanoidRootPart")
+
+    -- Use Lerp to teleport smoothly to the KingstreetTruck
+    lerpMoveToPosition(humanoidRootPart.Position, kingStreetTruck.Position, 2)  -- 2 second duration
+end
+
+-- Toggle for starting/stopping the KingStreet campaign
 sections.Section1:AddToggle({
     text = "Auto complete Kingstreet campaign",
     flag = "Toggle_1",
     callback = function(v)
-        _G.KingStreet  = v
-        KingStreet()
+        _G.KingStreet = v
+        if v then
+            KingStreet()
+        end
     end
 })
-
-
-
-
 
 
 _G.TicketFarm = true
@@ -1224,6 +1282,10 @@ sections.Section1:AddSeparator({
     text = "Zombie Exploits"
 })
 
+
+
+
+
 _G.SpamBlock = true
 
 function SpamBlock()
@@ -1235,6 +1297,12 @@ local ohBoolean1 = true
         wait(0)
     end
 end
+
+
+
+
+
+
 
 
 
@@ -1266,29 +1334,40 @@ sections.Section1:AddToggle({
 
 
 
+sections.Section1:AddButton({
+    enabled = true,
+    text = "Digger invisibility",
+    flag = "Button_1",
+    tooltip = "Digger",
+    confirm = false,
+    risky = true,
+    callback = function()     
+-- This script was generated by Hydroxide's RemoteSpy: https://github.com/Upbolt/Hydroxide
 
+local Players = game:GetService("Players")
+local localPlayer = Players.LocalPlayer
 
+-- Get the LocalPlayer's character and its HumanoidRootPart
+local character = localPlayer.Character or localPlayer.CharacterAdded:Wait()
+local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
 
-_G.BruteKill = true
+-- Get the LocalPlayer's CFrame
+local playerCFrame = humanoidRootPart.CFrame
 
-function BruteKill()
-    while _G.BruteKill == true do
+local ohString1 = "Enter"
 
+-- Use the player's CFrame as the new CFrame
+local ohCFrame2 = playerCFrame
 
-        wait(0.1)
-    end
-end
+-- Fire the server event with the updated CFrame
+game:GetService("ReplicatedStorage").Events.Zombie.DiggerPower:FireServer(ohString1, ohCFrame2)
 
-
-
-sections.Section1:AddToggle({
-    text = "Kill all (Brute) BROKEN!",
-    flag = "Toggle_1",
-    callback = function(v)
-        _G.BruteKill  = v
-        BruteKill()
     end
 })
+
+
+
+
 
 
 _G.Elmspam = true
@@ -1936,7 +2015,7 @@ sections.Section1:AddButton({
         
         -- Parameters for the stack
         local numTowers = 20 -- Number of towers to stack
-        local yIncrement = 15 -- Distance between towers on the Y-axis
+        local yIncrement = 16.4 -- Distance between towers on the Y-axis
         local forwardOffset = 5 -- Distance in front of the player to spawn the stack
         
         local function createStack()
@@ -2128,7 +2207,7 @@ sections.Section1:AddButton({
         local towerName = "Tower"
         
         -- Parameters for the stack
-        local numTowers = 20 -- Number of towers to stack
+        local numTowers = 1 -- Number of towers to stack
         local yIncrement = 15 -- Distance between towers on the Y-axis
         local forwardOffset = 5 -- Distance in front of the player to spawn the stack
         
@@ -2221,78 +2300,45 @@ sections.Section1:AddButton({
 })
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-sections.Section1:AddSeparator({
-    enabled = true,
-    text = "Misc"
-})
-
-
-
-
 sections.Section1:AddButton({
     enabled = true,
-    text = "Inf yield",
+    text = "Platform",
     flag = "Button_1",
-    tooltip = "inf yield",
-    confirm = true,
-    risky = false,
+    tooltip = "Needs hammer",
+    confirm = false,
+    risky = true,
     callback = function()     
+        -- Get the LocalPlayer's position
+local localPlayer = game.Players.LocalPlayer
+local character = localPlayer.Character
+local rootPart = character:FindFirstChild("HumanoidRootPart") -- Ensure the root part exists
 
+if rootPart then
+    local ohInstance1 = workspace.Characters.Survivors.ShadowBlaze2814.Hammer
+    local ohString2 = "Build"
 
+    -- Define positions for the sandbags
+    local positions = {
+        rootPart.CFrame * CFrame.new(0, -3, 0),    -- Directly under the player's feet
+        rootPart.CFrame * CFrame.new(-5, -3, 0),  -- To the left
+        rootPart.CFrame * CFrame.new(5, -3, 0),   -- To the right
+    }
 
-loadstring(game:HttpGet('https://raw.githubusercontent.com/DarkNetworks/Infinite-Yield/main/latest.lua'))()
+    -- Create sandbags at the defined positions
+    for _, position in ipairs(positions) do
+        local ohTable3 = {
+            ["Name"] = "Sandbags",
+            ["Cframe"] = position
+        }
+        game:GetService("ReplicatedStorage").Events.UseItem:FireServer(ohInstance1, ohString2, ohTable3)
+    end
+else
+    warn("HumanoidRootPart not found for the LocalPlayer!")
+end
+
     end
 })
 
-
-
-sections.Section1:AddButton({
-    enabled = true,
-    text = "Hydroxide",
-    flag = "Button_1",
-    tooltip = "",
-    confirm = true,
-    risky = false,
-    callback = function()     
-
-        local owner = "Upbolt"
-        local branch = "revision"
-        
-        local function webImport(file)
-            return loadstring(game:HttpGetAsync(("https://raw.githubusercontent.com/%s/Hydroxide/%s/%s.lua"):format(owner, branch, file)), file .. '.lua')()
-        end
-        
-        webImport("init")
-        webImport("ui/main")
-            end
-})
-
-
-
-sections.Section1:AddButton({
-    enabled = true,
-    text = "Dex",
-    flag = "Button_1",
-    tooltip = "inf yield",
-    confirm = true,
-    risky = false,
-    callback = function()     
-loadstring(game:HttpGet("https://raw.githubusercontent.com/HummingBird8/HummingRn/main/OptimizedDexForSolara.lua"))()
-            end
-        
-})
 
 
 
@@ -2331,6 +2377,77 @@ sections.Section2:AddToggle({
         ZombieKillAura()
     end
 })
+
+
+
+
+
+
+
+sections.Section2:AddSeparator({
+    enabled = true,
+    text = "Misc"
+})
+
+
+
+
+sections.Section2:AddButton({
+    enabled = true,
+    text = "Inf yield",
+    flag = "Button_1",
+    tooltip = "inf yield",
+    confirm = true,
+    risky = false,
+    callback = function()     
+
+
+
+loadstring(game:HttpGet('https://raw.githubusercontent.com/DarkNetworks/Infinite-Yield/main/latest.lua'))()
+    end
+})
+
+
+
+sections.Section2:AddButton({
+    enabled = true,
+    text = "Hydroxide",
+    flag = "Button_1",
+    tooltip = "",
+    confirm = true,
+    risky = false,
+    callback = function()     
+
+        local owner = "Upbolt"
+        local branch = "revision"
+        
+        local function webImport(file)
+            return loadstring(game:HttpGetAsync(("https://raw.githubusercontent.com/%s/Hydroxide/%s/%s.lua"):format(owner, branch, file)), file .. '.lua')()
+        end
+        
+        webImport("init")
+        webImport("ui/main")
+            end
+})
+
+
+
+sections.Section2:AddButton({
+    enabled = true,
+    text = "Dex",
+    flag = "Button_1",
+    tooltip = "inf yield",
+    confirm = true,
+    risky = false,
+    callback = function()     
+loadstring(game:HttpGet("https://raw.githubusercontent.com/HummingBird8/HummingRn/main/OptimizedDexForSolara.lua"))()
+            end
+        
+})
+
+
+
+
 
 
 
