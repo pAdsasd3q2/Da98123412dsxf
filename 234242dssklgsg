@@ -379,7 +379,7 @@ else
     -- If "NoRay" doesn't exist, print a message
     warn("NoRay workspace not found.")
 end
-
+wait(0.1)
     end
 end
 
@@ -600,7 +600,7 @@ function TicketFarm()
     local ticketsGained = finalTicketCount - previousTicketCount
 
     -- Send notification with the results
-    library:SendNotification("You gained " .. ticketsGained .. " tickets!", 5, Color3.new(0, 255, 0))
+    library:SendNotification("You gained " .. ticketsGained .. " tickets!", 5, Color3.new(128, 0, 128))
 end
 
 sections.Section2:AddToggle({
@@ -1911,13 +1911,183 @@ sections.Section1:AddToggle({
 
 sections.Section1:AddSeparator({
     enabled = true,
-    text = "Misc"
+    text = "Hammer"
 })
 
 
 
+sections.Section1:AddButton({
+    enabled = true,
+    text = "Sky scraper",
+    flag = "Button_1",
+    tooltip = "Needs hammer",
+    confirm = false,
+    risky = true,
+    callback = function()     
+        local Players = game:GetService("Players")
+        local player = Players.LocalPlayer
+        local character = player.Character or player.CharacterAdded:Wait()
+        
+        local hammer = workspace.Characters.Survivors:FindFirstChild(player.Name):FindFirstChild("Hammer")
+        local event = game:GetService("ReplicatedStorage").Events.UseItem
+        local buildType = "Build"
+        local towerName = "Tower"
+        
+        -- Parameters for the stack
+        local numTowers = 5 -- Number of towers to stack
+        local yIncrement = 15 -- Distance between towers on the Y-axis
+        local forwardOffset = 5 -- Distance in front of the player to spawn the stack
+        
+        local function createStack()
+            local rootPart = character:WaitForChild("HumanoidRootPart")
+            local startPosition = rootPart.Position + (rootPart.CFrame.LookVector * forwardOffset)
+        
+            for i = 0, numTowers - 1 do
+                local towerPosition = startPosition + Vector3.new(0, i * yIncrement, 0)
+                local towerCFrame = CFrame.new(towerPosition)
+        
+                -- Build the tower at the calculated position
+                event:FireServer(hammer, buildType, {
+                    ["Name"] = towerName,
+                    ["Cframe"] = towerCFrame
+                })
+            end
+        end
+        
+        -- Call the function to create the stack
+        createStack()
+        
 
 
+    end
+})
+
+
+sections.Section1:AddButton({
+    enabled = true,
+    text = "Vertical Sky scraper",
+    flag = "Button_1",
+    tooltip = "Needs hammer",
+    confirm = false,
+    risky = true,
+    callback = function()     
+        local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+
+-- Ensure that the character has a HumanoidRootPart to get its position and orientation
+local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+
+-- Get the LocalPlayer's position and facing direction
+local playerPosition = humanoidRootPart.Position
+local lookVector = humanoidRootPart.CFrame.LookVector
+
+-- Define the spacing and number of towers
+local spacing = 18 -- Distance between each tower
+local towerCount = 20 -- Total number of towers
+
+-- Iterate to place 20 towers
+for i = 1, towerCount do
+    -- Calculate the position for each tower
+    local adjustedPosition = playerPosition + (lookVector * (10 + (i - 1) * spacing)) - Vector3.new(0, 5, 0)
+
+    -- Determine the 9th number (facing direction) in the rotation matrix
+    local facingValue = lookVector.Z > 0 and 1 or 0
+
+    -- Define the rotation matrix dynamically
+    local rotationMatrix = CFrame.new(0, 0, 0, 1, 43, 0, 0, 43, 0, 0, 0, facingValue)
+
+    -- Combine the adjusted position with the rotation matrix
+    local ohTable3 = {
+        ["Name"] = "Tower",
+        ["Cframe"] = CFrame.new(adjustedPosition) * rotationMatrix
+    }
+
+    -- Assuming that you want to use this with the same hammer instance as before
+    local ohInstance1 = workspace.Characters.Survivors.ProRobloxian91437.Hammer
+    local ohString2 = "Build"
+
+    -- Fire the server event to place the tower
+    game:GetService("ReplicatedStorage").Events.UseItem:FireServer(ohInstance1, ohString2, ohTable3)
+end
+
+
+
+    end
+})
+
+
+
+sections.Section1:AddButton({
+    enabled = true,
+    text = "Cage Nearest",
+    flag = "Button_1",
+    tooltip = "Need hammer",
+    confirm = false,
+    risky = true,
+    callback = function()     
+
+
+
+-- Assuming local player
+local player = game:GetService("Players").LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+
+-- The object to be spawned
+local ohInstance1 = workspace.Characters.Survivors.ProRobloxian91437.Hammer
+local ohString2 = "Build"
+
+-- Helper function to spawn objects at a given CFrame
+local function spawnObject(position)
+    local ohTable3 = {
+        ["Name"] = "Tower",
+        ["Cframe"] = CFrame.new(position)
+    }
+
+    -- Fire the event to use the item at the position
+    game:GetService("ReplicatedStorage").Events.UseItem:FireServer(ohInstance1, ohString2, ohTable3)
+end
+
+-- Find the closest model in workspace.Characters.Survivors excluding the LocalPlayer
+local closestModel = nil
+local closestDistance = math.huge  -- Start with a very large number
+
+for _, model in pairs(workspace.Characters.Survivors:GetChildren()) do
+    if model:IsA("Model") and model:FindFirstChild("HumanoidRootPart") and model ~= character then
+        -- Calculate the distance to the model, but exclude the LocalPlayer's character
+        local distance = (humanoidRootPart.Position - model.HumanoidRootPart.Position).Magnitude
+        if distance < closestDistance then
+            closestDistance = distance
+            closestModel = model
+        end
+    end
+end
+
+if closestModel then
+    -- Parameters for the circle and position
+    local radius = 5  -- Reduced radius for the circle
+    local angleOffset = math.pi / 2  -- Offset angle to ensure it starts from the front
+    local lowerAmount = 10  -- Lower the towers by 10 studs (adjustable)
+    local topTowerHeight = 3  -- The height for the top tower, above the closest model
+
+    -- Spawn the 4 objects in a circle around the closest model (lowered towers)
+    for i = 0, 3 do
+        local angle = angleOffset + (i * math.pi / 2)  -- Each object is placed 90 degrees apart
+        local x = closestModel.HumanoidRootPart.Position.X + radius * math.cos(angle)
+        local z = closestModel.HumanoidRootPart.Position.Z + radius * math.sin(angle)
+        
+        -- Lower the other towers significantly
+        local y = closestModel.HumanoidRootPart.Position.Y - lowerAmount  
+
+        spawnObject(Vector3.new(x, y, z))
+    end
+
+    -- Spawn the object on top of the closest model (keep it at a higher height)
+    spawnObject(Vector3.new(closestModel.HumanoidRootPart.Position.X, closestModel.HumanoidRootPart.Position.Y + topTowerHeight, closestModel.HumanoidRootPart.Position.Z))
+
+end    end
+})
 
 
 sections.Section1:AddSeparator({
@@ -2023,14 +2193,14 @@ sections.Section2:AddToggle({
 
 
 
-library:SendNotification("Sync.wtf Succesfully Loaded!", 5, Color3.new(60, 0, 255))
+library:SendNotification("Sync.wtf Succesfully Loaded!", 5, Color3.new(128, 0, 128))
 wait(0.5)
 
 
 
-library:SendNotification("Update logs: Added Auto Complete KingStreet", 5, Color3.new(0, 0, 255))
+library:SendNotification("Update logs: Added Hammer exploits", 5, Color3.new(128, 0, 128))
 
-library:SendNotification("Update logs: Fixed and improved alot of features", 5, Color3.new(0, 0, 255))
+library:SendNotification("Update logs: Fixed and improved alot of features", 5, Color3.new(128, 0, 128))
 
 
 
