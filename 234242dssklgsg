@@ -497,7 +497,7 @@ function TicketFarm()
     end
 
     -- Get the initial ticket count
-    local initialTickets = game:GetService("Players").LocalPlayer..Tickets.Value
+    local initialTickets = game:GetService("Players").LocalPlayer:WaitForChild("Tickets").Value
     local previousTicketCount = initialTickets
 
     while _G.TicketFarm == true do
@@ -596,7 +596,7 @@ function TicketFarm()
     disableNoclip(characterInSurvivors)
 
     -- Calculate and show the tickets gained after farming stops
-    local finalTicketCount = game:GetService("Players").LocalPlayer.SETTINGS.Tickets.Value
+    local finalTicketCount = game:GetService("Players").LocalPlayer:WaitForChild("Tickets").Value
     local ticketsGained = finalTicketCount - previousTicketCount
 
     -- Send notification with the results
@@ -613,6 +613,7 @@ sections.Section2:AddToggle({
         end
     end
 })
+
 
 
 
@@ -1934,7 +1935,7 @@ sections.Section1:AddButton({
         local towerName = "Tower"
         
         -- Parameters for the stack
-        local numTowers = 5 -- Number of towers to stack
+        local numTowers = 20 -- Number of towers to stack
         local yIncrement = 15 -- Distance between towers on the Y-axis
         local forwardOffset = 5 -- Distance in front of the player to spawn the stack
         
@@ -1972,47 +1973,54 @@ sections.Section1:AddButton({
     risky = true,
     callback = function()     
         local Players = game:GetService("Players")
-local player = Players.LocalPlayer
-local character = player.Character or player.CharacterAdded:Wait()
+        local player = Players.LocalPlayer
+        local character = player.Character or player.CharacterAdded:Wait()
 
--- Ensure that the character has a HumanoidRootPart to get its position and orientation
-local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+        -- Ensure that the character has a HumanoidRootPart to get its position and orientation
+        local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
 
--- Get the LocalPlayer's position and facing direction
-local playerPosition = humanoidRootPart.Position
-local lookVector = humanoidRootPart.CFrame.LookVector
+        -- Get the LocalPlayer's position and facing direction
+        local playerPosition = humanoidRootPart.Position
+        local lookVector = humanoidRootPart.CFrame.LookVector
 
--- Define the spacing and number of towers
-local spacing = 18 -- Distance between each tower
-local towerCount = 20 -- Total number of towers
+        -- Define the spacing and number of towers
+        local spacing = 18 -- Distance between each tower
+        local towerCount = 20 -- Total number of towers
 
--- Iterate to place 20 towers
-for i = 1, towerCount do
-    -- Calculate the position for each tower
-    local adjustedPosition = playerPosition + (lookVector * (10 + (i - 1) * spacing)) - Vector3.new(0, 5, 0)
+        -- Locate the hammer instance dynamically
+        local hammerInstance = nil
+        for _, tool in ipairs(character:GetChildren()) do
+            if tool:IsA("Tool") and tool.Name == "Hammer" then
+                hammerInstance = tool
+                break
+            end
+        end
 
-    -- Determine the 9th number (facing direction) in the rotation matrix
-    local facingValue = lookVector.Z > 0 and 1 or 0
+        if not hammerInstance then
+            warn("Hammer not found! Equip your hammer and try again.")
+            return
+        end
 
-    -- Define the rotation matrix dynamically
-    local rotationMatrix = CFrame.new(0, 0, 0, 1, 43, 0, 0, 43, 0, 0, 0, facingValue)
+        -- Iterate to place 20 towers
+        for i = 1, towerCount do
+            -- Calculate the position for each tower
+            local adjustedPosition = playerPosition + (lookVector * (10 + (i - 1) * spacing)) - Vector3.new(0, 5, 0)
 
-    -- Combine the adjusted position with the rotation matrix
-    local ohTable3 = {
-        ["Name"] = "Tower",
-        ["Cframe"] = CFrame.new(adjustedPosition) * rotationMatrix
-    }
+            -- Determine the 9th number (facing direction) in the rotation matrix
+            local facingValue = lookVector.Z > 0 and 1 or 0
 
-    -- Assuming that you want to use this with the same hammer instance as before
-    local ohInstance1 = workspace.Characters.Survivors.ProRobloxian91437.Hammer
-    local ohString2 = "Build"
+            -- Define the rotation matrix dynamically
+            local rotationMatrix = CFrame.new(0, 0, 0, 1, 43, 0, 0, 43, 0, 0, 0, facingValue)
 
-    -- Fire the server event to place the tower
-    game:GetService("ReplicatedStorage").Events.UseItem:FireServer(ohInstance1, ohString2, ohTable3)
-end
+            -- Combine the adjusted position with the rotation matrix
+            local ohTable3 = {
+                ["Name"] = "Tower",
+                ["Cframe"] = CFrame.new(adjustedPosition) * rotationMatrix
+            }
 
-
-
+            -- Fire the server event to place the tower
+            game:GetService("ReplicatedStorage").Events.UseItem:FireServer(hammerInstance, "Build", ohTable3)
+        end
     end
 })
 
@@ -2026,68 +2034,203 @@ sections.Section1:AddButton({
     confirm = false,
     risky = true,
     callback = function()     
+        -- Assuming local player
+        local player = game:GetService("Players").LocalPlayer
+        local character = player.Character or player.CharacterAdded:Wait()
+        local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+
+        -- Locate the hammer instance dynamically
+        local hammerInstance = nil
+        for _, tool in ipairs(character:GetChildren()) do
+            if tool:IsA("Tool") and tool.Name == "Hammer" then
+                hammerInstance = tool
+                break
+            end
+        end
+
+        if not hammerInstance then
+            warn("Hammer not found! Equip your hammer and try again.")
+            return
+        end
+
+        -- Helper function to spawn objects at a given CFrame
+        local function spawnObject(position)
+            local ohTable3 = {
+                ["Name"] = "Tower",
+                ["Cframe"] = CFrame.new(position)
+            }
+
+            -- Fire the event to use the item at the position
+            game:GetService("ReplicatedStorage").Events.UseItem:FireServer(hammerInstance, "Build", ohTable3)
+        end
+
+        -- Find the closest model in workspace.Characters.Survivors excluding the LocalPlayer
+        local closestModel = nil
+        local closestDistance = math.huge  -- Start with a very large number
+
+        for _, model in pairs(workspace.Characters.Survivors:GetChildren()) do
+            if model:IsA("Model") and model:FindFirstChild("HumanoidRootPart") and model ~= character then
+                -- Calculate the distance to the model, but exclude the LocalPlayer's character
+                local distance = (humanoidRootPart.Position - model.HumanoidRootPart.Position).Magnitude
+                if distance < closestDistance then
+                    closestDistance = distance
+                    closestModel = model
+                end
+            end
+        end
+
+        if closestModel then
+            -- Parameters for the circle and position
+            local radius = 5  -- Reduced radius for the circle
+            local angleOffset = math.pi / 2  -- Offset angle to ensure it starts from the front
+            local lowerAmount = 10  -- Lower the towers by 10 studs (adjustable)
+            local topTowerHeight = 3  -- The height for the top tower, above the closest model
+
+            -- Spawn the 4 objects in a circle around the closest model (lowered towers)
+            for i = 0, 3 do
+                local angle = angleOffset + (i * math.pi / 2)  -- Each object is placed 90 degrees apart
+                local x = closestModel.HumanoidRootPart.Position.X + radius * math.cos(angle)
+                local z = closestModel.HumanoidRootPart.Position.Z + radius * math.sin(angle)
+                
+                -- Lower the other towers significantly
+                local y = closestModel.HumanoidRootPart.Position.Y - lowerAmount  
+
+                spawnObject(Vector3.new(x, y, z))
+            end
+
+            -- Spawn the object on top of the closest model (keep it at a higher height)
+            spawnObject(Vector3.new(closestModel.HumanoidRootPart.Position.X, closestModel.HumanoidRootPart.Position.Y + topTowerHeight, closestModel.HumanoidRootPart.Position.Z))
+        end    
+    end
+})
+
+
+sections.Section1:AddSeparator({
+    enabled = true,
+    text = "Fortnite"
+})
+
+sections.Section1:AddButton({
+    enabled = true,
+    text = "Place 1 Tower",
+    flag = "Button_1",
+    tooltip = "Needs hammer",
+    confirm = false,
+    risky = true,
+    callback = function()     
+        local Players = game:GetService("Players")
+        local player = Players.LocalPlayer
+        local character = player.Character or player.CharacterAdded:Wait()
+        
+        local hammer = workspace.Characters.Survivors:FindFirstChild(player.Name):FindFirstChild("Hammer")
+        local event = game:GetService("ReplicatedStorage").Events.UseItem
+        local buildType = "Build"
+        local towerName = "Tower"
+        
+        -- Parameters for the stack
+        local numTowers = 20 -- Number of towers to stack
+        local yIncrement = 15 -- Distance between towers on the Y-axis
+        local forwardOffset = 5 -- Distance in front of the player to spawn the stack
+        
+        local function createStack()
+            local rootPart = character:WaitForChild("HumanoidRootPart")
+            local startPosition = rootPart.Position + (rootPart.CFrame.LookVector * forwardOffset)
+        
+            for i = 0, numTowers - 1 do
+                local towerPosition = startPosition + Vector3.new(0, i * yIncrement, 0)
+                local towerCFrame = CFrame.new(towerPosition)
+        
+                -- Build the tower at the calculated position
+                event:FireServer(hammer, buildType, {
+                    ["Name"] = towerName,
+                    ["Cframe"] = towerCFrame
+                })
+            end
+        end
+        
+        -- Call the function to create the stack
+        createStack()
+        
+
+
+    end
+})
 
 
 
--- Assuming local player
-local player = game:GetService("Players").LocalPlayer
-local character = player.Character or player.CharacterAdded:Wait()
-local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
 
--- The object to be spawned
-local ohInstance1 = workspace.Characters.Survivors.ProRobloxian91437.Hammer
-local ohString2 = "Build"
 
--- Helper function to spawn objects at a given CFrame
-local function spawnObject(position)
-    local ohTable3 = {
-        ["Name"] = "Tower",
-        ["Cframe"] = CFrame.new(position)
-    }
+sections.Section1:AddButton({
+    enabled = true,
+    text = "Place 1 vertical tower",
+    flag = "Button_1",
+    tooltip = "Needs hammer",
+    confirm = false,
+    risky = true,
+    callback = function()     
+        local Players = game:GetService("Players")
+        local player = Players.LocalPlayer
+        local character = player.Character or player.CharacterAdded:Wait()
 
-    -- Fire the event to use the item at the position
-    game:GetService("ReplicatedStorage").Events.UseItem:FireServer(ohInstance1, ohString2, ohTable3)
-end
+        -- Ensure that the character has a HumanoidRootPart to get its position and orientation
+        local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
 
--- Find the closest model in workspace.Characters.Survivors excluding the LocalPlayer
-local closestModel = nil
-local closestDistance = math.huge  -- Start with a very large number
+        -- Get the LocalPlayer's position and facing direction
+        local playerPosition = humanoidRootPart.Position
+        local lookVector = humanoidRootPart.CFrame.LookVector
 
-for _, model in pairs(workspace.Characters.Survivors:GetChildren()) do
-    if model:IsA("Model") and model:FindFirstChild("HumanoidRootPart") and model ~= character then
-        -- Calculate the distance to the model, but exclude the LocalPlayer's character
-        local distance = (humanoidRootPart.Position - model.HumanoidRootPart.Position).Magnitude
-        if distance < closestDistance then
-            closestDistance = distance
-            closestModel = model
+        -- Define the spacing and number of towers
+        local spacing = 18 -- Distance between each tower
+        local towerCount = 1 -- Total number of towers
+
+        -- Locate the hammer instance dynamically
+        local hammerInstance = nil
+        for _, tool in ipairs(character:GetChildren()) do
+            if tool:IsA("Tool") and tool.Name == "Hammer" then
+                hammerInstance = tool
+                break
+            end
+        end
+
+        if not hammerInstance then
+            warn("Hammer not found! Equip your hammer and try again.")
+            return
+        end
+
+        -- Iterate to place 20 towers
+        for i = 1, towerCount do
+            -- Calculate the position for each tower
+            local adjustedPosition = playerPosition + (lookVector * (10 + (i - 1) * spacing)) - Vector3.new(0, 5, 0)
+
+            -- Determine the 9th number (facing direction) in the rotation matrix
+            local facingValue = lookVector.Z > 0 and 1 or 0
+
+            -- Define the rotation matrix dynamically
+            local rotationMatrix = CFrame.new(0, 0, 0, 1, 43, 0, 0, 43, 0, 0, 0, facingValue)
+
+            -- Combine the adjusted position with the rotation matrix
+            local ohTable3 = {
+                ["Name"] = "Tower",
+                ["Cframe"] = CFrame.new(adjustedPosition) * rotationMatrix
+            }
+
+            -- Fire the server event to place the tower
+            game:GetService("ReplicatedStorage").Events.UseItem:FireServer(hammerInstance, "Build", ohTable3)
         end
     end
-end
-
-if closestModel then
-    -- Parameters for the circle and position
-    local radius = 5  -- Reduced radius for the circle
-    local angleOffset = math.pi / 2  -- Offset angle to ensure it starts from the front
-    local lowerAmount = 10  -- Lower the towers by 10 studs (adjustable)
-    local topTowerHeight = 3  -- The height for the top tower, above the closest model
-
-    -- Spawn the 4 objects in a circle around the closest model (lowered towers)
-    for i = 0, 3 do
-        local angle = angleOffset + (i * math.pi / 2)  -- Each object is placed 90 degrees apart
-        local x = closestModel.HumanoidRootPart.Position.X + radius * math.cos(angle)
-        local z = closestModel.HumanoidRootPart.Position.Z + radius * math.sin(angle)
-        
-        -- Lower the other towers significantly
-        local y = closestModel.HumanoidRootPart.Position.Y - lowerAmount  
-
-        spawnObject(Vector3.new(x, y, z))
-    end
-
-    -- Spawn the object on top of the closest model (keep it at a higher height)
-    spawnObject(Vector3.new(closestModel.HumanoidRootPart.Position.X, closestModel.HumanoidRootPart.Position.Y + topTowerHeight, closestModel.HumanoidRootPart.Position.Z))
-
-end    end
 })
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 sections.Section1:AddSeparator({
@@ -2188,6 +2331,117 @@ sections.Section2:AddToggle({
         ZombieKillAura()
     end
 })
+
+
+
+_G.SpearKillAura = true
+
+function SpearKillAura()
+    while _G.SpearKillAura == true do
+        local player = game:GetService("Players").LocalPlayer
+        local character = player.Character or player.CharacterAdded:Wait()
+        local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+        
+        -- Get the workspace service
+        local workspace = game:GetService("Workspace")
+        
+        -- Find all models in workspace.Characters.Zombies
+        local zombies = workspace.Characters.Zombies:GetChildren()
+        
+        -- Initialize variables to track the closest model and the shortest distance
+        local closestZombie = nil
+        local closestDistance = math.huge  -- Start with a very large number
+        
+        -- Iterate through all zombies and find the closest one
+        for _, zombie in pairs(zombies) do
+            if zombie:IsA("Model") and zombie:FindFirstChild("HumanoidRootPart") then
+                local zombiePosition = zombie.HumanoidRootPart.Position
+                local distance = (humanoidRootPart.Position - zombiePosition).Magnitude
+        
+                if distance < closestDistance then
+                    closestDistance = distance
+                    closestZombie = zombie
+                end
+            end
+        end
+        
+        -- If a closest zombie is found, fire the remote event
+        if closestZombie then
+            -- Get the position of the closest zombie
+            local targetPosition = closestZombie.HumanoidRootPart.Position
+        
+            -- Create the table with the new MousePos as the closest zombie's position
+            local ohTable1 = {
+                ["MousePos"] = targetPosition
+            }
+        
+            -- Fire the event with the new position
+            workspace.Characters.Survivors.ShadowBlaze2814.Spear.Throw:FireServer(ohTable1)
+        else
+            warn("No zombies found in workspace.Characters.Zombies!")
+        end
+        
+        wait(0)
+    end
+end
+
+
+
+sections.Section2:AddToggle({
+    text = "Spear kill aura",
+    flag = "Toggle_1",
+    callback = function(v)
+        _G.SpearKillAura  = v
+        SpearKillAura()
+    end
+})
+
+
+
+_G.SpearGround = true
+
+function SpearGround()
+    while _G.SpearGround == true do
+        local player = game:GetService("Players").LocalPlayer
+        local character = player.Character or player.CharacterAdded:Wait()
+        local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+        
+        -- Get the workspace service
+        local workspace = game:GetService("Workspace")
+        
+        -- Calculate the position right under the LocalPlayer's HumanoidRootPart
+        local targetPosition = humanoidRootPart.Position - Vector3.new(0, 5, 0)  -- Adjust -5 to control how far under the player
+        
+        -- Create the table with the new MousePos as the position right under the player
+        local ohTable1 = {
+            ["MousePos"] = targetPosition
+        }
+        
+        -- Fire the event with the new position
+        workspace.Characters.Survivors.ShadowBlaze2814.Spear.Throw:FireServer(ohTable1)
+         
+        wait(0)
+    end
+end
+
+
+
+sections.Section2:AddToggle({
+    text = "Spear ground",
+    flag = "Toggle_1",
+    callback = function(v)
+        _G.SpearGround  = v
+        SpearGround()
+    end
+})
+
+
+
+
+
+
+
+
 
 
 
