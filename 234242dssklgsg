@@ -359,39 +359,7 @@ sections.Section1:AddToggle({
 
 
 
-_G.AntiLag = true
-function AntiLag()
-    while _G.AntiLag == true do 
-        -- Get the "NoRay" workspace
-local noRayWorkspace = game.Workspace:FindFirstChild("NoRay")
 
--- Check if the "NoRay" workspace exists
-if noRayWorkspace then
-    -- Loop through all the objects in the "NoRay" workspace
-    for _, part in pairs(noRayWorkspace:GetChildren()) do
-        -- Check if the object's name is "Ticket"
-        if part.Name == "Ticket" then
-            -- Destroy the "Ticket" part
-            part:Destroy()
-        end
-    end
-else
-    -- If "NoRay" doesn't exist, print a message
-    warn("NoRay workspace not found.")
-end
-wait(0.1)
-    end
-end
-
-
-sections.Section2:AddToggle({
-    text = "Anti Lag (Removes tickets)",
-    flag = "Toggle_1",
-    callback = function(v)
-        _G.AntiLag  = v
-        AntiLag()
-    end
-})
 
 
 
@@ -424,7 +392,7 @@ function preventFallDamage()
         if humanoidRootPart then
             humanoidRootPart.Velocity = Vector3.zero
         end
-        wait(0.1) -- Small delay to avoid overloading
+        wait(0.01) -- Small delay to avoid overloading
     end
 end
 
@@ -438,9 +406,9 @@ function lerpMoveToPosition(fromPosition, toPosition, duration)
 
         -- Add wobble effect (tiny random offsets)
         local wobbleOffset = Vector3.new(
-            math.random(-5, 5) * 0.1, -- Small random x offset
-            math.random(-5, 5) * 0.1, -- Small random y offset
-            math.random(-5, 5) * 0.1  -- Small random z offset
+            math.random(-10, 10) * 0.2, -- Small random x offset
+            math.random(-10, 10) * 0.2, -- Small random y offset
+            math.random(-10, 10) * 0.2  -- Small random z offset
         )
         
         -- Apply the wobble effect to the current position
@@ -474,7 +442,7 @@ function teleportToRandomWheel()
         -- Teleport to the same wheel about 5 times
         for i = 1, 5 do
             lerpMoveToPosition(humanoidRootPart.Position, randomWheel.Position, 0.05)  -- 0.05 second duration
-            wait(2) -- Wait for 2 seconds at the wheel after each teleport
+            wait(0.01) -- Wait for 2 seconds at the wheel after each teleport
         end
     else
         print("No wheels found in workspace.NoRay!")
@@ -498,7 +466,7 @@ function teleportToAllKingStreetWheels()
         local humanoidRootPart = game:GetService("Players").LocalPlayer.Character:WaitForChild("HumanoidRootPart")
 
         -- Use Lerp to teleport smoothly to each "wheel" part
-        lerpMoveToPosition(humanoidRootPart.Position, wheel.Position, 0.1)  -- Reduced duration to 0.1 seconds
+        lerpMoveToPosition(humanoidRootPart.Position, wheel.Position, 0.03)  -- Reduced duration to 0.1 seconds
     end
 end
 
@@ -512,7 +480,7 @@ function KingStreet()
         teleportToAllKingStreetWheels()
 
         -- Small delay between loops
-        wait(0.5)
+        wait(0.01)
     end
 end
 
@@ -530,6 +498,10 @@ sections.Section1:AddToggle({
         end
     end
 })
+
+
+
+local backupMap = {} -- Table to store backup of Map contents
 
 
 
@@ -938,6 +910,9 @@ end
 
 
 
+
+
+
 sections.Section2:AddToggle({
     text = "Teleport to gifts",
     flag = "Toggle_1",
@@ -946,6 +921,79 @@ sections.Section2:AddToggle({
         GiftTp()
     end
 })
+
+
+
+sections.Section2:AddSeparator({
+    enabled = true,
+    text = "Anti lag"
+})
+
+
+
+
+_G.AntiLag = true
+function AntiLag()
+    while _G.AntiLag == true do 
+        -- Get the "NoRay" workspace
+local noRayWorkspace = game.Workspace:FindFirstChild("NoRay")
+
+-- Check if the "NoRay" workspace exists
+if noRayWorkspace then
+    -- Loop through all the objects in the "NoRay" workspace
+    for _, part in pairs(noRayWorkspace:GetChildren()) do
+        -- Check if the object's name is "Ticket"
+        if part.Name == "Ticket" then
+            -- Destroy the "Ticket" part
+            part:Destroy()
+        end
+    end
+else
+    -- If "NoRay" doesn't exist, print a message
+    warn("NoRay workspace not found.")
+end
+wait(0.1)
+    end
+end
+
+
+sections.Section2:AddToggle({
+    text = "Anti Lag (Removes tickets)",
+    flag = "Toggle_1",
+    callback = function(v)
+        _G.AntiLag  = v
+        AntiLag()
+    end
+})
+
+
+
+sections.Section2:AddToggle({
+    text = "Delete map",
+    flag = "Toggle_1",
+    callback = function(v) -- `v` is true when toggled on, false when toggled off
+        if v then
+            -- Toggle ON: Backup and clear workspace.Map
+            for i, child in pairs(workspace.Map:GetChildren()) do
+                backupMap[child.Name] = child -- Save reference to each child
+                child.Parent = nil -- Remove from workspace.Map
+            end
+            library:SendNotification("Map cleared.", 5, Color3.new(128, 0, 128))
+        else
+            -- Toggle OFF: Restore workspace.Map
+            for name, child in pairs(backupMap) do
+                child.Parent = workspace.Map -- Reparent back to workspace.Map
+            end
+            backupMap = {} -- Clear the backup to avoid duplication
+            library:SendNotification("Map restored.", 5, Color3.new(128, 0, 128))
+        end
+    end
+})
+
+
+
+
+
 
 sections.Section2:AddSeparator({
     enabled = true,
@@ -1015,7 +1063,7 @@ function MeleeKillAura()
             end
         end
         
-        wait(0.00001)
+        wait(0.01)
     end
 
     -- Calculate and display the results after _G.MeleeKillAura is turned off
