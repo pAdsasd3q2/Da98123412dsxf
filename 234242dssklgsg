@@ -417,9 +417,19 @@ function disableNoclip(character)
     end
 end
 
+-- Constantly set velocity to zero to prevent fall damage
+function preventFallDamage()
+    while _G.KingStreet do
+        local humanoidRootPart = game:GetService("Players").LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+        if humanoidRootPart then
+            humanoidRootPart.Velocity = Vector3.zero
+        end
+        wait(0.1) -- Small delay to avoid overloading
+    end
+end
+
 -- Smooth Lerp movement with wobble effect
 function lerpMoveToPosition(fromPosition, toPosition, duration)
-    local steps = 20 -- Number of steps for the interpolation
     local startTime = tick()
 
     while tick() - startTime < duration do
@@ -461,8 +471,11 @@ function teleportToRandomWheel()
         local randomWheel = wheels[math.random(1, #wheels)]
         local humanoidRootPart = game:GetService("Players").LocalPlayer.Character:WaitForChild("HumanoidRootPart")
 
-        -- Use Lerp to teleport
-        lerpMoveToPosition(humanoidRootPart.Position, randomWheel.Position, 1)  -- 1 second duration
+        -- Teleport to the same wheel about 5 times
+        for i = 1, 5 do
+            lerpMoveToPosition(humanoidRootPart.Position, randomWheel.Position, 0.05)  -- 0.05 second duration
+            wait(2) -- Wait for 2 seconds at the wheel after each teleport
+        end
     else
         print("No wheels found in workspace.NoRay!")
     end
@@ -485,25 +498,26 @@ function teleportToAllKingStreetWheels()
         local humanoidRootPart = game:GetService("Players").LocalPlayer.Character:WaitForChild("HumanoidRootPart")
 
         -- Use Lerp to teleport smoothly to each "wheel" part
-        lerpMoveToPosition(humanoidRootPart.Position, wheel.Position, 1)  -- 1 second duration
+        lerpMoveToPosition(humanoidRootPart.Position, wheel.Position, 0.1)  -- Reduced duration to 0.1 seconds
     end
 end
 
 -- Function to start the process of teleportation and wobble
 function KingStreet()
-    -- First teleport to a random "wheel" in workspace.NoRay
-    teleportToRandomWheel()
+    while _G.KingStreet do
+        -- First teleport to a random "wheel" in workspace.NoRay and visit it 5 times
+        teleportToRandomWheel()
 
-    -- Then teleport to all "wheel" parts in workspace.Map.Truck.KingstreetTruck.Wheels
-    teleportToAllKingStreetWheels()
+        -- Then teleport to all "wheel" parts in workspace.Map.Truck.KingstreetTruck.Wheels
+        teleportToAllKingStreetWheels()
 
-    -- After completing the teleportation to all wheels, teleport to the KingstreetTruck itself
-    local kingStreetTruck = workspace:WaitForChild("Map"):WaitForChild("Truck"):WaitForChild("KingstreetTruck")
-    local humanoidRootPart = game:GetService("Players").LocalPlayer.Character:WaitForChild("HumanoidRootPart")
-
-    -- Use Lerp to teleport smoothly to the KingstreetTruck
-    lerpMoveToPosition(humanoidRootPart.Position, kingStreetTruck.Position, 2)  -- 2 second duration
+        -- Small delay between loops
+        wait(0.5)
+    end
 end
+
+-- Run fall damage prevention in a separate thread
+spawn(preventFallDamage)
 
 -- Toggle for starting/stopping the KingStreet campaign
 sections.Section1:AddToggle({
@@ -512,10 +526,11 @@ sections.Section1:AddToggle({
     callback = function(v)
         _G.KingStreet = v
         if v then
-            KingStreet()
+            spawn(KingStreet) -- Run KingStreet in a separate thread
         end
     end
 })
+
 
 
 _G.TicketFarm = true
@@ -2309,35 +2324,37 @@ sections.Section1:AddButton({
     risky = true,
     callback = function()     
         -- Get the LocalPlayer's position
-local localPlayer = game.Players.LocalPlayer
-local character = localPlayer.Character
-local rootPart = character:FindFirstChild("HumanoidRootPart") -- Ensure the root part exists
+        local players = game:GetService("Players")
+        local localPlayer = players.LocalPlayer
+        local character = localPlayer.Character
+        local rootPart = character:FindFirstChild("HumanoidRootPart") -- Ensure the root part exists
 
-if rootPart then
-    local ohInstance1 = workspace.Characters.Survivors.ShadowBlaze2814.Hammer
-    local ohString2 = "Build"
+        if rootPart then
+            -- Use the LocalPlayer's name dynamically
+            local ohInstance1 = workspace.Characters.Survivors[localPlayer.Name].Hammer
+            local ohString2 = "Build"
 
-    -- Define positions for the sandbags
-    local positions = {
-        rootPart.CFrame * CFrame.new(0, -3, 0),    -- Directly under the player's feet
-        rootPart.CFrame * CFrame.new(-5, -3, 0),  -- To the left
-        rootPart.CFrame * CFrame.new(5, -3, 0),   -- To the right
-    }
+            -- Define positions for the sandbags
+            local positions = {
+                rootPart.CFrame * CFrame.new(0, -3, 0),    -- Directly under the player's feet
+                rootPart.CFrame * CFrame.new(-3, -3, 0),  -- To the left
+                rootPart.CFrame * CFrame.new(3, -3, 0),   -- To the right
+            }
 
-    -- Create sandbags at the defined positions
-    for _, position in ipairs(positions) do
-        local ohTable3 = {
-            ["Name"] = "Sandbags",
-            ["Cframe"] = position
-        }
-        game:GetService("ReplicatedStorage").Events.UseItem:FireServer(ohInstance1, ohString2, ohTable3)
-    end
-else
-    warn("HumanoidRootPart not found for the LocalPlayer!")
-end
-
+            -- Create sandbags at the defined positions
+            for _, position in ipairs(positions) do
+                local ohTable3 = {
+                    ["Name"] = "Sandbags",
+                    ["Cframe"] = position
+                }
+                game:GetService("ReplicatedStorage").Events.UseItem:FireServer(ohInstance1, ohString2, ohTable3)
+            end
+        else
+            warn("HumanoidRootPart not found for the LocalPlayer!")
+        end
     end
 })
+
 
 
 
@@ -2377,76 +2394,6 @@ sections.Section2:AddToggle({
         ZombieKillAura()
     end
 })
-
-
-
-
-
-
-
-sections.Section2:AddSeparator({
-    enabled = true,
-    text = "Misc"
-})
-
-
-
-
-sections.Section2:AddButton({
-    enabled = true,
-    text = "Inf yield",
-    flag = "Button_1",
-    tooltip = "inf yield",
-    confirm = true,
-    risky = false,
-    callback = function()     
-
-
-
-loadstring(game:HttpGet('https://raw.githubusercontent.com/DarkNetworks/Infinite-Yield/main/latest.lua'))()
-    end
-})
-
-
-
-sections.Section2:AddButton({
-    enabled = true,
-    text = "Hydroxide",
-    flag = "Button_1",
-    tooltip = "",
-    confirm = true,
-    risky = false,
-    callback = function()     
-
-        local owner = "Upbolt"
-        local branch = "revision"
-        
-        local function webImport(file)
-            return loadstring(game:HttpGetAsync(("https://raw.githubusercontent.com/%s/Hydroxide/%s/%s.lua"):format(owner, branch, file)), file .. '.lua')()
-        end
-        
-        webImport("init")
-        webImport("ui/main")
-            end
-})
-
-
-
-sections.Section2:AddButton({
-    enabled = true,
-    text = "Dex",
-    flag = "Button_1",
-    tooltip = "inf yield",
-    confirm = true,
-    risky = false,
-    callback = function()     
-loadstring(game:HttpGet("https://raw.githubusercontent.com/HummingBird8/HummingRn/main/OptimizedDexForSolara.lua"))()
-            end
-        
-})
-
-
-
 
 
 
@@ -2551,6 +2498,76 @@ sections.Section2:AddToggle({
         SpearGround()
     end
 })
+
+
+sections.Section2:AddSeparator({
+    enabled = true,
+    text = "Misc"
+})
+
+
+
+
+sections.Section2:AddButton({
+    enabled = true,
+    text = "Inf yield",
+    flag = "Button_1",
+    tooltip = "inf yield",
+    confirm = true,
+    risky = false,
+    callback = function()     
+
+
+
+loadstring(game:HttpGet('https://raw.githubusercontent.com/DarkNetworks/Infinite-Yield/main/latest.lua'))()
+    end
+})
+
+
+
+sections.Section2:AddButton({
+    enabled = true,
+    text = "Hydroxide",
+    flag = "Button_1",
+    tooltip = "",
+    confirm = true,
+    risky = false,
+    callback = function()     
+
+        local owner = "Upbolt"
+        local branch = "revision"
+        
+        local function webImport(file)
+            return loadstring(game:HttpGetAsync(("https://raw.githubusercontent.com/%s/Hydroxide/%s/%s.lua"):format(owner, branch, file)), file .. '.lua')()
+        end
+        
+        webImport("init")
+        webImport("ui/main")
+            end
+})
+
+
+
+sections.Section2:AddButton({
+    enabled = true,
+    text = "Dex",
+    flag = "Button_1",
+    tooltip = "inf yield",
+    confirm = true,
+    risky = false,
+    callback = function()     
+loadstring(game:HttpGet("https://raw.githubusercontent.com/HummingBird8/HummingRn/main/OptimizedDexForSolara.lua"))()
+            end
+        
+})
+
+
+
+
+
+
+
+
 
 
 
