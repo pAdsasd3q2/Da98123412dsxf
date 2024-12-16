@@ -76,32 +76,14 @@ _G.AntiRadiation = true
 
 function AntiRadiation()
     while _G.AntiRadiation == true do
--- Script to remove specific objects by name in workspace.NoRay and workspace.Decay
-
--- Remove specific objects in workspace.NoRay
-local noRay = workspace:FindFirstChild("NoRay")
-if noRay then
-    for _, obj in ipairs(noRay:GetChildren()) do
-        if obj.Name == "Honey" or obj.Name == "Hive" or obj.Name == "ElmFire" then
-            obj:Destroy()
+if workspace:FindFirstChild("Decay") then
+    local decayFolder = workspace.Decay
+    for _, descendant in ipairs(decayFolder:GetDescendants()) do
+        if descendant.Name == "Toxic" then
+            descendant:Destroy()
         end
     end
-else
-    warn("NoRay folder not found in workspace")
 end
-
--- Remove specific objects in workspace.Decay
-local decay = workspace:FindFirstChild("Decay")
-if decay then
-    for _, obj in ipairs(decay:GetChildren()) do
-        if obj.Name == "Toxic" then
-            obj:Destroy()
-        end
-    end
-else
-    warn("Decay folder not found in workspace")
-end
-
 wait(0.01)
 
     end
@@ -110,7 +92,7 @@ end
 
 
 sections.Section1:AddToggle({
-    text = "Immune to zombie abilities",
+    text = "Anti radiation",
     flag = "Toggle_1",
     callback = function(v)
         _G.AntiRadiation  = v
@@ -409,8 +391,6 @@ sections.Section1:AddToggle({
 
 
 
-
-
 _G.KingStreet = true
 
 -- Function to enable noclip (if needed) for teleporting without collision issues
@@ -519,6 +499,9 @@ end
 -- Function to start the process of teleportation and wobble
 function KingStreet()
     while _G.KingStreet do
+        -- Start fall damage prevention in a separate thread each loop
+        spawn(preventFallDamage)
+
         -- First teleport to a random "wheel" in workspace.NoRay and visit it 5 times
         teleportToRandomWheel()
 
@@ -529,9 +512,6 @@ function KingStreet()
         wait(0.05)
     end
 end
-
--- Run fall damage prevention in a separate thread
-spawn(preventFallDamage)
 
 -- Toggle for starting/stopping the KingStreet campaign
 sections.Section1:AddToggle({
@@ -544,6 +524,7 @@ sections.Section1:AddToggle({
         end
     end
 })
+
 
 
 
@@ -723,7 +704,7 @@ function ModDetector()
 local blacklistedNames = {
     "c4rpye", "scott1333", "sagecrisi_s", "JackLighters", "alum_i", 
     "Masterdude180", "drinkyz", "IDunhill", "Dr_Greedster", "Tekrinn", 
-    "TheeOfficalOG", "ur_lucky", "Synween", "mrvriie"
+    "TheeOfficalOG", "ur_lucky", "Synween", "mrvriie", "QtAdomi"
 }
 
 -- Get the Players service
@@ -1311,7 +1292,7 @@ function TpZombies()
                     local humanoidRootPart = randomZombie:FindFirstChild("HumanoidRootPart")
                     if humanoidRootPart then
                         -- Get the position of the HumanoidRootPart and add a Y offset of 15 studs
-                        local targetPosition = humanoidRootPart.Position + Vector3.new(0, -10, 0)
+                        local targetPosition = humanoidRootPart.Position + Vector3.new(0, -13, 0)
 
                         -- Teleport the player to the new position
                         playerCharacter:SetPrimaryPartCFrame(CFrame.new(targetPosition))
@@ -1948,6 +1929,36 @@ sections.Section1:AddToggle({
     end
 })
 
+_G.ChangeFace = true
+local function ChangeFace()
+    while _G.ChangeFace == true do
+
+local ohString1 = "X_X"
+
+game:GetService("ReplicatedStorage").Events.Survivor.SetFace:FireServer(ohString1)
+
+
+wait(0.1)
+local ohString1 = "Normal"
+
+game:GetService("ReplicatedStorage").Events.Survivor.SetFace:FireServer(ohString1)
+
+wait(0.1)
+local ohString1 = "Squint"
+
+game:GetService("ReplicatedStorage").Events.Survivor.SetFace:FireServer(ohString1)
+        wait(0.1)
+    end
+end
+
+sections.Section1:AddToggle({
+    text = "Change face",  -- Toggle name
+    flag = "Toggle_1",  -- Flag for state tracking
+    callback = function(v)
+        _G.ChangeFace  = v
+        ChangeFace()
+    end
+})
 
 
 
@@ -2239,8 +2250,8 @@ sections.Section1:AddButton({
         
         -- Parameters for the stack
         local numTowers = 20 -- Number of towers to stack
-        local yIncrement = 16.4 -- Distance between towers on the Y-axis
-        local forwardOffset = 5 -- Distance in front of the player to spawn the stack
+        local yIncrement = 17 -- Distance between towers on the Y-axis
+        local forwardOffset = 5 -- Distance in front of the player to spawn the 
         
         local function createStack()
             local rootPart = character:WaitForChild("HumanoidRootPart")
@@ -3062,6 +3073,145 @@ RunService.RenderStepped:Connect(function()
 end)
 
 
+
+
+
+sections.Section2:AddSeparator({
+    enabled = true,
+    text = "Experimental"
+})
+
+
+
+_G.UnanchoredParts = true
+
+function UnanchoredParts()
+    while _G.UnanchoredParts == true do
+-- Get necessary services using GetService
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+
+-- Get the LocalPlayer
+local player = Players.LocalPlayer
+
+-- Wait for the character to load and ensure the HumanoidRootPart is available
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+
+-- Define the teleport distance (5 studs in front of the character)
+local teleportDistance = 0
+
+-- Function to teleport all unanchored parts to 5 studs in front of a random Survivor's position
+local function teleportUnanchoredParts()
+    -- Get all models in workspace.Characters.Survivors
+    local survivorsFolder = Workspace:WaitForChild("Characters"):WaitForChild("Survivors")
+    local survivors = {}
+
+    -- Collect all survivor models, excluding the LocalPlayer's character
+    for _, model in pairs(survivorsFolder:GetChildren()) do
+        if model:IsA("Model") and model:FindFirstChild("HumanoidRootPart") then
+            -- Exclude the LocalPlayer's character
+            if model.Name ~= player.Name then
+                table.insert(survivors, model)
+            end
+        end
+    end
+
+    -- If there are survivors available, teleport parts based on a random survivor's position
+    if #survivors > 0 then
+        -- Pick a random survivor
+        local randomSurvivor = survivors[math.random(1, #survivors)]
+        local survivorRootPart = randomSurvivor:WaitForChild("HumanoidRootPart")
+
+        -- Loop through all parts in the Workspace, but skip parts under workspace.Characters
+        for _, obj in pairs(Workspace:GetDescendants()) do
+            -- Ensure the object is not inside the Characters folder, is a BasePart, and is unanchored
+            if obj:IsA("BasePart") and not obj.Anchored and not obj:IsDescendantOf(Workspace.Characters) then
+                -- Calculate the position 5 studs in front of the selected survivor's HumanoidRootPart
+                local direction = survivorRootPart.CFrame.LookVector  -- Forward direction the survivor is facing
+                local newPosition = survivorRootPart.Position + direction * teleportDistance
+                
+                -- Teleport the part to the new position
+                obj.CFrame = CFrame.new(newPosition)
+            end
+        end
+    else
+        warn("No survivors found in the Survivors folder.")
+    end
+end
+
+-- Call the function to teleport unanchored parts
+teleportUnanchoredParts()
+wait(0.7)
+
+    end
+end
+
+
+
+sections.Section2:AddToggle({
+    text = "Tp unanchored parts",
+    flag = "Toggle_1",
+    callback = function(v)
+        _G.UnanchoredParts  = v
+        UnanchoredParts()
+    end
+})
+
+
+
+sections.Section2:AddButton({
+    enabled = true,
+    text = "Get items",
+    flag = "Button_1",
+    tooltip = "Tp's to medboxes",
+    confirm = true,
+    risky = false,
+    callback = function()     
+        local Players = game:GetService("Players")
+        local player = Players.LocalPlayer
+        local character = player.Character or player.CharacterAdded:Wait()
+        
+        -- Make sure the HealthBoxes folder exists
+        local healthBoxesFolder = workspace.Map:FindFirstChild("HealthBoxes")
+        if not healthBoxesFolder then
+            warn("No HealthBoxes folder found in workspace.Map!")
+            return
+        end
+        
+        -- Function to teleport the character to the Healthbox's Back part
+        local function teleportToBack(healthbox)
+            if healthbox:IsA("Model") and healthbox.Name == "Healthbox" then
+                -- Find the Back part in the Healthbox model
+                local backPart = healthbox:FindFirstChild("Back")
+                if backPart and backPart:IsA("BasePart") then
+                    -- Teleport the character to the Back part
+                    character:SetPrimaryPartCFrame(CFrame.new(backPart.Position))
+                else
+                    warn("Healthbox model does not have a 'Back' part!")
+                end
+            end
+        end
+        
+        
+        local healthBoxes = workspace.Map.HealthBoxes:GetChildren()
+        
+        for i = 1, #healthBoxes do
+            local healthPrompt = healthBoxes[i].Back.HealthPrompt
+            fireproximityprompt(healthPrompt)
+        end
+        
+        
+        -- Iterate over all Healthboxes in the folder
+        for _, healthbox in pairs(healthBoxesFolder:GetChildren()) do
+            teleportToBack(healthbox)
+            wait(0.1)  -- Wait 0.1 seconds before teleporting to the next Healthbox
+        end
+        
+
+
+    end
+})
 
 
 
